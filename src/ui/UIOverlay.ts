@@ -1,4 +1,4 @@
-export type PanelId = 'computer' | 'stock-shelf' | 'checkout' | 'day-summary' | 'storage';
+export type PanelId = 'computer' | 'stock-shelf' | 'checkout' | 'day-summary' | 'storage' | 'pack-opening' | 'collection';
 
 const OVERLAY_STYLES = `
   .tcg-overlay {

@@ -92,6 +92,36 @@ class InventoryManager {
     if (available.length === 0) return null;
     return available[Math.floor(Math.random() * available.length)];
   }
+
+  removeFromStorage(productId: string, qty: number): boolean {
+    const inStorage = this.getStorageQuantity(productId);
+    if (inStorage < qty) return false;
+    this.storage.set(productId, inStorage - qty);
+    return true;
+  }
+
+  serialize(): { storage: Record<string, number>; shelves: Record<string, number> } {
+    const storage: Record<string, number> = {};
+    const shelves: Record<string, number> = {};
+    for (const [id, qty] of this.storage.entries()) {
+      if (qty > 0) storage[id] = qty;
+    }
+    for (const [id, qty] of this.shelves.entries()) {
+      if (qty > 0) shelves[id] = qty;
+    }
+    return { storage, shelves };
+  }
+
+  deserialize(data: { storage: Record<string, number>; shelves: Record<string, number> }): void {
+    this.storage.clear();
+    this.shelves.clear();
+    for (const [id, qty] of Object.entries(data.storage)) {
+      this.storage.set(id, qty);
+    }
+    for (const [id, qty] of Object.entries(data.shelves)) {
+      this.shelves.set(id, qty);
+    }
+  }
 }
 
 export const Inventory = new InventoryManager();

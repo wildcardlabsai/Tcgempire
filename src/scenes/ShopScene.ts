@@ -12,8 +12,11 @@ import { ShelfPanel } from '../ui/ShelfPanel';
 import { CheckoutPanel } from '../ui/CheckoutPanel';
 import { DaySummaryPanel } from '../ui/DaySummaryPanel';
 import { StoragePanel } from '../ui/StoragePanel';
+import { PackOpeningPanel } from '../ui/PackOpeningPanel';
+import { CollectionPanel } from '../ui/CollectionPanel';
 import { SHOP, PLAYER_START } from '../config/shop-layout';
 import { Inventory } from '../data/Inventory';
+import { SaveManager } from '../data/SaveManager';
 
 const SPEED = 160;
 
@@ -32,6 +35,8 @@ export class ShopScene extends Phaser.Scene {
   private checkoutPanel!: CheckoutPanel;
   private daySummaryPanel!: DaySummaryPanel;
   private storagePanel!: StoragePanel;
+  private packOpeningPanel!: PackOpeningPanel;
+  private collectionPanel!: CollectionPanel;
 
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
@@ -45,9 +50,11 @@ export class ShopScene extends Phaser.Scene {
   create(): void {
     this.cameras.main.fadeIn(400, 0, 0, 0);
 
-    Inventory.moveToShelf('dragon-booster', 5);
-    Inventory.moveToShelf('ocean-booster', 5);
-    Inventory.moveToShelf('forest-booster', 3);
+    if (!SaveManager.hasSave()) {
+      Inventory.moveToShelf('dragon-booster', 5);
+      Inventory.moveToShelf('ocean-booster', 5);
+      Inventory.moveToShelf('forest-booster', 3);
+    }
 
     this.shopRenderer = new ShopRenderer(this);
     this.shopRenderer.draw();
@@ -62,6 +69,7 @@ export class ShopScene extends Phaser.Scene {
     this.dayManager = new DayManager();
     this.dayManager.setOnSummary((summary) => {
       this.customerManager.pause();
+      SaveManager.save();
       this.daySummaryPanel.show(summary, () => {
         this.dayManager.startNextDay();
         this.customerManager.resetDailyStats();
@@ -84,6 +92,12 @@ export class ShopScene extends Phaser.Scene {
     this.checkoutPanel = new CheckoutPanel(this.overlay);
     this.daySummaryPanel = new DaySummaryPanel(this.overlay);
     this.storagePanel = new StoragePanel(this.overlay);
+    this.packOpeningPanel = new PackOpeningPanel(this.overlay);
+    this.collectionPanel = new CollectionPanel(this.overlay);
+
+    this.storagePanel.setOnOpenPacks(() => {
+      this.packOpeningPanel.show(() => {});
+    });
 
     this.touchControls = new TouchControls(this);
     this.touchControls.create();
