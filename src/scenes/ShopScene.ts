@@ -98,6 +98,9 @@ export class ShopScene extends Phaser.Scene {
     this.storagePanel.setOnOpenPacks(() => {
       this.packOpeningPanel.show(() => {});
     });
+    this.computerPanel.setOnDecorationChange(() => {
+      this.shopRenderer.refreshDecorations();
+    });
 
     this.touchControls = new TouchControls(this);
     this.touchControls.create();

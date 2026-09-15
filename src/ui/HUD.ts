@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GameState } from '../data/GameState';
+import { Decorations } from '../data/Decorations';
 
 export class HUD {
   private scene: Phaser.Scene;
@@ -8,6 +9,7 @@ export class HUD {
   private dayText!: Phaser.GameObjects.Text;
   private levelText!: Phaser.GameObjects.Text;
   private customerText!: Phaser.GameObjects.Text;
+  private ratingText!: Phaser.GameObjects.Text;
 
   private endDayButton!: Phaser.GameObjects.Container;
   private onEndDay: (() => void) | null = null;
@@ -50,8 +52,9 @@ export class HUD {
     this.dayText = this.scene.add.text(0, 44, '', style);
     this.levelText = this.scene.add.text(0, 64, '', style);
     this.customerText = this.scene.add.text(0, 84, '', { ...style, fontSize: '12px', color: '#aaaaaa' });
+    this.ratingText = this.scene.add.text(0, 100, '', { ...style, fontSize: '12px', color: '#ffd700' });
 
-    const bg = this.scene.add.rectangle(80, 52, 180, 120, 0x000000, 0.5);
+    const bg = this.scene.add.rectangle(80, 60, 180, 140, 0x000000, 0.5);
     bg.setStrokeStyle(1, 0xffd700, 0.3);
 
     this.container = this.scene.add.container(0, 0, [
@@ -61,6 +64,7 @@ export class HUD {
       this.dayText,
       this.levelText,
       this.customerText,
+      this.ratingText,
     ]);
     this.container.setDepth(200);
     this.container.setScrollFactor(0);
@@ -105,6 +109,13 @@ export class HUD {
     this.dayText.setText(`Day: ${GameState.day}`);
     this.levelText.setText(`Shop Level: ${GameState.shopLevel}`);
     this.customerText.setText(`Customers in shop: ${this.customerCount}`);
+
+    const rating = Decorations.getRating();
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+      stars += i <= Math.round(rating) ? '★' : '☆';
+    }
+    this.ratingText.setText(`Rating: ${stars}`);
   }
 
   updatePosition(): void {

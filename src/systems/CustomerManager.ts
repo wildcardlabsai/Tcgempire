@@ -3,6 +3,7 @@ import { Customer } from '../entities/Customer';
 import { Inventory } from '../data/Inventory';
 import { GameState } from '../data/GameState';
 import { getShopLevel } from '../data/ShopUpgrades';
+import { Decorations } from '../data/Decorations';
 
 export class CustomerManager {
   private scene: Phaser.Scene;
@@ -25,7 +26,9 @@ export class CustomerManager {
 
   private scheduleNextSpawn(): void {
     const level = this.getLevel();
-    const delay = Phaser.Math.Between(level.spawnMin, level.spawnMax);
+    const bonus = Decorations.getAttractionBonus();
+    const multiplier = Math.max(0.3, 1 - bonus);
+    const delay = Math.round(Phaser.Math.Between(level.spawnMin, level.spawnMax) * multiplier);
     this.spawnTimer = this.scene.time.delayedCall(delay, () => {
       this.trySpawn();
       this.scheduleNextSpawn();

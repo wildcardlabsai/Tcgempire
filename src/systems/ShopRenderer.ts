@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { SHOP, FURNITURE, DOOR } from '../config/shop-layout';
 import { Inventory } from '../data/Inventory';
+import { Decorations, DECORATION_CATALOG } from '../data/Decorations';
 
 export class ShopRenderer {
   private scene: Phaser.Scene;
   private productSprites: Phaser.GameObjects.GameObject[] = [];
+  private decorSprites: Phaser.GameObjects.GameObject[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -16,6 +18,7 @@ export class ShopRenderer {
     this.drawDoor();
     this.drawFurniture();
     this.refreshProducts();
+    this.refreshDecorations();
   }
 
   refreshProducts(): void {
@@ -24,6 +27,14 @@ export class ShopRenderer {
     }
     this.productSprites = [];
     this.drawProducts();
+  }
+
+  refreshDecorations(): void {
+    for (const s of this.decorSprites) {
+      s.destroy();
+    }
+    this.decorSprites = [];
+    this.drawDecorations();
   }
 
   private drawFloor(): void {
@@ -160,6 +171,24 @@ export class ShopRenderer {
 
         slotIndex++;
       }
+    }
+  }
+
+  private drawDecorations(): void {
+    const placed = Decorations.getPlaced();
+    for (const p of placed) {
+      const def = DECORATION_CATALOG.find(d => d.id === p.id);
+      if (!def) continue;
+
+      const rect = this.scene.add.rectangle(p.x, p.y, def.width, def.height, def.color, 0.8);
+      rect.setStrokeStyle(1, 0xffffff, 0.3);
+      rect.setDepth(3);
+      this.decorSprites.push(rect);
+
+      const label = this.scene.add.text(p.x, p.y, def.icon, {
+        fontSize: `${Math.min(def.width, def.height) - 4}px`,
+      }).setOrigin(0.5).setDepth(4);
+      this.decorSprites.push(label);
     }
   }
 }

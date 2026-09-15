@@ -7,15 +7,21 @@ import { ALL_CARDS, RARITY_COLORS, RARITY_LABELS } from '../data/Cards';
 import { SaveManager } from '../data/SaveManager';
 import { PriceManager } from '../data/PriceManager';
 import { getShopLevel, getNextUpgrade, SHOP_LEVELS } from '../data/ShopUpgrades';
+import { Decorations, DECORATION_CATALOG } from '../data/Decorations';
 
-type TabId = 'order' | 'pricing' | 'upgrade' | 'inventory' | 'collection' | 'save';
+type TabId = 'order' | 'pricing' | 'upgrade' | 'decor' | 'inventory' | 'collection' | 'save';
 
 export class ComputerPanel {
   private overlay: UIOverlay;
   private currentTab: TabId = 'order';
+  private onDecorationChange: (() => void) | null = null;
 
   constructor(overlay: UIOverlay) {
     this.overlay = overlay;
+  }
+
+  setOnDecorationChange(cb: () => void): void {
+    this.onDecorationChange = cb;
   }
 
   show(onClose: () => void): void {
@@ -28,6 +34,7 @@ export class ComputerPanel {
       { id: 'order', label: 'Order' },
       { id: 'pricing', label: 'Pricing' },
       { id: 'upgrade', label: 'Upgrade' },
+      { id: 'decor', label: 'Decor' },
       { id: 'collection', label: 'Cards' },
       { id: 'save', label: 'Save' },
     ];
@@ -43,6 +50,7 @@ export class ComputerPanel {
       case 'order': body = this.renderOrderTab(); break;
       case 'pricing': body = this.renderPricingTab(); break;
       case 'upgrade': body = this.renderUpgradeTab(); break;
+      case 'decor': body = this.renderDecorTab(); break;
       case 'collection': body = this.renderCollectionTab(); break;
       case 'save': body = this.renderSaveTab(); break;
     }
@@ -76,6 +84,16 @@ export class ComputerPanel {
       const delta = parseInt(el.dataset.delta!);
       const current = PriceManager.getMarkup(productId);
       PriceManager.setMarkup(productId, current + delta);
+      this.render(onClose);
+    });
+
+    this.overlay.onClick('[data-buy-decor]', (e) => {
+      const decorId = (e.currentTarget as HTMLElement).dataset.buyDecor!;
+      const def = DECORATION_CATALOG.find(d => d.id === decorId);
+      if (def && GameState.spendCash(def.cost)) {
+        Decorations.place(decorId);
+        if (this.onDecorationChange) this.onDecorationChange();
+      }
       this.render(onClose);
     });
 
@@ -207,6 +225,71 @@ export class ComputerPanel {
     }
 
     return `${progressHtml}${currentHtml}${upgradeHtml}`;
+  }
+
+  private renderDecorTab(): string {
+    const cash = GameState.cash;
+    const rating = Decorations.getRating();
+    const bonus = Decorations.getAttractionBonus();
+    const bonusPct = Math.round(bonus * 100);
+    const placed = Decorations.getPlacedCount();
+
+    const starsHtml = this.renderStars(rating);
+
+    let rows = '';
+    for (const d of DECORATION_CATALOG) {
+      const owned = Decorations.hasDecoration(d.id);
+      const locked = GameState.shopLevel < d.minLevel;
+      const canAfford = cash >= d.cost;
+      const colorHex = '#' + d.color.toString(16).padStart(6, '0');
+      const bonusTxt = '+' + Math.round(d.attractionBonus * 100) + '%';
+
+      let actionHtml: string;
+      if (owned) {
+        actionHtml = '<span style="color:#2ecc71;font-size:12px;font-weight:bold">Placed</span>';
+      } else if (locked) {
+        actionHtml = `<span style="color:#888;font-size:11px">Lv.${d.minLevel}</span>`;
+      } else {
+        actionHtml = `<button class="tcg-btn tcg-btn-success" data-buy-decor="${d.id}" ${canAfford ? '' : 'disabled'} style="padding:6px 12px;min-height:36px">£${d.cost}</button>`;
+      }
+
+      rows += `
+        <div class="tcg-product-row" style="opacity:${locked ? '0.4' : '1'}">
+          <div style="width:28px;height:28px;background:${colorHex};border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-right:10px;flex-shrink:0">${d.icon}</div>
+          <div class="tcg-product-info">
+            <div class="tcg-product-name">${d.name}</div>
+            <div class="tcg-product-detail">${d.description} · <span style="color:#ffd700">${bonusTxt} attraction</span></div>
+          </div>
+          <div class="tcg-product-actions">${actionHtml}</div>
+        </div>
+      `;
+    }
+
+    return `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:13px;color:#aaa">
+          Shop Rating: ${starsHtml} <span style="color:#ffd700;font-weight:bold">${rating.toFixed(1)}</span>
+        </div>
+        <div style="font-size:12px;color:#aaa">
+          Attraction: <strong style="color:#2ecc71">+${bonusPct}%</strong> · Placed: ${placed}/10
+        </div>
+      </div>
+      <div style="max-height:50vh;overflow-y:auto">${rows}</div>
+    `;
+  }
+
+  private renderStars(rating: number): string {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      if (rating >= i) {
+        html += '<span style="color:#ffd700">★</span>';
+      } else if (rating >= i - 0.5) {
+        html += '<span style="color:#ffd700">★</span>';
+      } else {
+        html += '<span style="color:rgba(255,255,255,0.2)">★</span>';
+      }
+    }
+    return html;
   }
 
   private renderInventoryTab(): string {
