@@ -1,14 +1,18 @@
 import { UIOverlay } from './UIOverlay';
-import { PRODUCTS, Product } from '../data/Products';
+import { PRODUCTS } from '../data/Products';
 import { Inventory } from '../data/Inventory';
 import { GameState } from '../data/GameState';
 import { Collection } from '../data/Collection';
 import { ALL_CARDS, RARITY_COLORS, RARITY_LABELS } from '../data/Cards';
 import { SaveManager } from '../data/SaveManager';
+import { PriceManager } from '../data/PriceManager';
+import { getShopLevel, getNextUpgrade, SHOP_LEVELS } from '../data/ShopUpgrades';
+
+type TabId = 'order' | 'pricing' | 'upgrade' | 'inventory' | 'collection' | 'save';
 
 export class ComputerPanel {
   private overlay: UIOverlay;
-  private currentTab: 'order' | 'inventory' | 'collection' | 'save' = 'order';
+  private currentTab: TabId = 'order';
 
   constructor(overlay: UIOverlay) {
     this.overlay = overlay;
@@ -20,10 +24,11 @@ export class ComputerPanel {
   }
 
   private render(onClose: () => void): void {
-    const tabs: { id: 'order' | 'inventory' | 'collection' | 'save'; label: string }[] = [
+    const tabs: { id: TabId; label: string }[] = [
       { id: 'order', label: 'Order' },
-      { id: 'inventory', label: 'Inventory' },
-      { id: 'collection', label: 'Collection' },
+      { id: 'pricing', label: 'Pricing' },
+      { id: 'upgrade', label: 'Upgrade' },
+      { id: 'collection', label: 'Cards' },
       { id: 'save', label: 'Save' },
     ];
 
@@ -36,7 +41,8 @@ export class ComputerPanel {
     let body = '';
     switch (this.currentTab) {
       case 'order': body = this.renderOrderTab(); break;
-      case 'inventory': body = this.renderInventoryTab(); break;
+      case 'pricing': body = this.renderPricingTab(); break;
+      case 'upgrade': body = this.renderUpgradeTab(); break;
       case 'collection': body = this.renderCollectionTab(); break;
       case 'save': body = this.renderSaveTab(); break;
     }
@@ -53,7 +59,7 @@ export class ComputerPanel {
     this.overlay.show(html, onClose);
 
     this.overlay.onClick('[data-tab]', (e) => {
-      const tab = (e.currentTarget as HTMLElement).dataset.tab as typeof this.currentTab;
+      const tab = (e.currentTarget as HTMLElement).dataset.tab as TabId;
       this.currentTab = tab;
       this.render(onClose);
     });
@@ -61,6 +67,23 @@ export class ComputerPanel {
     this.overlay.onClick('[data-order]', (e) => {
       const productId = (e.currentTarget as HTMLElement).dataset.order!;
       this.orderProduct(productId);
+      this.render(onClose);
+    });
+
+    this.overlay.onClick('[data-markup]', (e) => {
+      const el = e.currentTarget as HTMLElement;
+      const productId = el.dataset.markup!;
+      const delta = parseInt(el.dataset.delta!);
+      const current = PriceManager.getMarkup(productId);
+      PriceManager.setMarkup(productId, current + delta);
+      this.render(onClose);
+    });
+
+    this.overlay.onClick('#tcg-upgrade-shop', () => {
+      const next = getNextUpgrade(GameState.shopLevel);
+      if (next && GameState.spendCash(next.upgradeCost)) {
+        GameState.shopLevel = next.level;
+      }
       this.render(onClose);
     });
 
@@ -78,14 +101,15 @@ export class ComputerPanel {
     const cash = GameState.cash;
     let rows = '';
     for (const p of PRODUCTS) {
-      const canAfford = cash >= p.costPrice;
+      const totalCost = p.costPrice * 5;
+      const canAfford = cash >= totalCost;
       const colorHex = '#' + p.color.toString(16).padStart(6, '0');
       rows += `
         <div class="tcg-product-row">
           <div class="tcg-product-color" style="background:${colorHex}"></div>
           <div class="tcg-product-info">
             <div class="tcg-product-name">${p.name}</div>
-            <div class="tcg-product-detail">Cost: £${p.costPrice} · Sell: £${p.sellPrice}</div>
+            <div class="tcg-product-detail">Cost: £${totalCost} (£${p.costPrice} ea)</div>
           </div>
           <div class="tcg-product-actions">
             <button class="tcg-btn tcg-btn-success" data-order="${p.id}" ${canAfford ? '' : 'disabled'}>
@@ -102,6 +126,87 @@ export class ComputerPanel {
       </p>
       ${rows}
     `;
+  }
+
+  private renderPricingTab(): string {
+    let rows = '';
+    for (const p of PRODUCTS) {
+      const markup = PriceManager.getMarkup(p.id);
+      const sellPrice = PriceManager.getSellPrice(p);
+      const profit = sellPrice - p.costPrice;
+      const profitColor = profit > 0 ? '#2ecc71' : profit < 0 ? '#e74c3c' : '#aaa';
+      const colorHex = '#' + p.color.toString(16).padStart(6, '0');
+      const markupColor = markup > 0 ? '#2ecc71' : markup < 0 ? '#e74c3c' : '#fff';
+
+      rows += `
+        <div class="tcg-product-row" style="flex-wrap:wrap">
+          <div class="tcg-product-color" style="background:${colorHex}"></div>
+          <div class="tcg-product-info">
+            <div class="tcg-product-name">${p.name}</div>
+            <div class="tcg-product-detail">
+              Base: £${p.sellPrice} · Price: <strong style="color:${markupColor}">£${sellPrice.toFixed(2)}</strong> · Profit: <span style="color:${profitColor}">£${profit.toFixed(2)}</span>
+            </div>
+          </div>
+          <div class="tcg-product-actions">
+            <button class="tcg-btn tcg-btn-secondary" data-markup="${p.id}" data-delta="-10" style="padding:6px 10px;min-height:36px">-10%</button>
+            <span style="min-width:40px;text-align:center;font-size:13px;color:${markupColor}">${markup > 0 ? '+' : ''}${markup}%</span>
+            <button class="tcg-btn tcg-btn-secondary" data-markup="${p.id}" data-delta="10" style="padding:6px 10px;min-height:36px">+10%</button>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <p style="color:#aaa;font-size:13px;margin:0 0 12px 0">
+        Set markups on your products. Higher prices mean more profit but customers may not buy!
+      </p>
+      ${rows}
+    `;
+  }
+
+  private renderUpgradeTab(): string {
+    const current = getShopLevel(GameState.shopLevel);
+    const next = getNextUpgrade(GameState.shopLevel);
+    const cash = GameState.cash;
+
+    let progressHtml = '<div style="display:flex;gap:4px;margin-bottom:16px">';
+    for (let i = 0; i < SHOP_LEVELS.length; i++) {
+      const filled = i < GameState.shopLevel;
+      progressHtml += `<div style="flex:1;height:6px;border-radius:3px;background:${filled ? '#ffd700' : 'rgba(255,255,255,0.1)'}"></div>`;
+    }
+    progressHtml += '</div>';
+
+    let currentHtml = `
+      <div style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:8px;padding:12px;margin-bottom:12px">
+        <div style="font-size:15px;font-weight:bold;color:#ffd700">${current.name}</div>
+        <div style="font-size:12px;color:#aaa">Level ${current.level} · ${current.description}</div>
+        <div style="margin-top:6px;font-size:12px;color:#ccc">
+          Max Customers: ${current.maxCustomers} · Patience: ${current.customerPatience}s
+        </div>
+      </div>
+    `;
+
+    let upgradeHtml = '';
+    if (next) {
+      const canAfford = cash >= next.upgradeCost;
+      upgradeHtml = `
+        <div style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px;margin-bottom:8px">
+          <div style="font-size:14px;font-weight:bold;color:#fff">${next.name}</div>
+          <div style="font-size:12px;color:#aaa">${next.description}</div>
+          <div style="margin-top:6px;font-size:12px;color:#ccc">
+            Customers: <strong style="color:#2ecc71">${next.maxCustomers}</strong> ·
+            Patience: <strong style="color:#2ecc71">${next.customerPatience}s</strong>
+          </div>
+          <div style="margin-top:6px;font-size:14px;color:#ffd700;font-weight:bold">Cost: £${next.upgradeCost.toLocaleString('en-GB')}</div>
+        </div>
+        <button class="tcg-btn tcg-btn-success" id="tcg-upgrade-shop" ${canAfford ? '' : 'disabled'} style="width:100%">
+          ${canAfford ? 'Upgrade Shop' : `Need £${(next.upgradeCost - cash).toLocaleString('en-GB')} more`}
+        </button>
+      `;
+    } else {
+      upgradeHtml = '<div style="text-align:center;padding:12px;color:#ffd700;font-style:italic">Maximum level reached!</div>';
+    }
+
+    return `${progressHtml}${currentHtml}${upgradeHtml}`;
   }
 
   private renderInventoryTab(): string {

@@ -3,6 +3,7 @@ import { SaveManager } from '../data/SaveManager';
 import { GameState } from '../data/GameState';
 import { Inventory } from '../data/Inventory';
 import { Collection } from '../data/Collection';
+import { PriceManager } from '../data/PriceManager';
 
 export class StartScene extends Phaser.Scene {
   constructor() {
@@ -116,6 +117,7 @@ export class StartScene extends Phaser.Scene {
         GameState.reset();
         Inventory.reset();
         Collection.reset();
+        PriceManager.reset();
         this.startGame();
       });
     } else {
@@ -144,6 +146,7 @@ export class StartScene extends Phaser.Scene {
         GameState.reset();
         Inventory.reset();
         Collection.reset();
+        PriceManager.reset();
         this.startGame();
       });
     }

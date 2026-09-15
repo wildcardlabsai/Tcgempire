@@ -16,26 +16,34 @@ export class Customer {
   state: CustomerState = 'entering';
   desiredProduct: Product | null = null;
   purchaseQty = 1;
+  lostPatience = false;
+  counted = false;
 
   private scene: Phaser.Scene;
   private targetX = 0;
   private targetY = 0;
   private waitTimer = 0;
-  private skinColor: number;
-  private shirtColor: number;
+  private maxPatience: number;
+  private patienceRemaining: number;
+  private patienceBar: Phaser.GameObjects.Graphics;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, patience: number = 15) {
     this.scene = scene;
-    this.skinColor = SKIN_COLORS[Math.floor(Math.random() * SKIN_COLORS.length)];
-    this.shirtColor = SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)];
+    this.maxPatience = patience;
+    this.patienceRemaining = patience;
 
-    const body = scene.add.rectangle(0, 0, SIZE, SIZE, this.shirtColor);
-    body.setStrokeStyle(1.5, Phaser.Display.Color.IntegerToColor(this.shirtColor).darken(25).color);
+    const skinColor = SKIN_COLORS[Math.floor(Math.random() * SKIN_COLORS.length)];
+    const shirtColor = SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)];
 
-    const head = scene.add.circle(0, -SIZE / 2 - 3, 6, this.skinColor);
-    head.setStrokeStyle(1, Phaser.Display.Color.IntegerToColor(this.skinColor).darken(15).color);
+    const body = scene.add.rectangle(0, 0, SIZE, SIZE, shirtColor);
+    body.setStrokeStyle(1.5, Phaser.Display.Color.IntegerToColor(shirtColor).darken(25).color);
 
-    this.sprite = scene.add.container(DOOR.x, SHOP.height - SHOP.wallThickness - SIZE, [body, head]);
+    const head = scene.add.circle(0, -SIZE / 2 - 3, 6, skinColor);
+    head.setStrokeStyle(1, Phaser.Display.Color.IntegerToColor(skinColor).darken(15).color);
+
+    this.patienceBar = scene.add.graphics();
+
+    this.sprite = scene.add.container(DOOR.x, SHOP.height - SHOP.wallThickness - SIZE, [body, head, this.patienceBar]);
     this.sprite.setSize(SIZE, SIZE);
     this.sprite.setDepth(9);
 
@@ -84,14 +92,16 @@ export class Customer {
         this.moveToward(cx, cy, dt);
         if (this.isNear(cx, cy, 4)) {
           this.state = 'waiting';
-          this.waitTimer = 15;
+          this.patienceRemaining = this.maxPatience;
         }
         break;
       }
 
       case 'waiting':
-        this.waitTimer -= dt;
-        if (this.waitTimer <= 0) {
+        this.patienceRemaining -= dt;
+        this.drawPatienceBar();
+        if (this.patienceRemaining <= 0) {
+          this.lostPatience = true;
           this.state = 'leaving';
           this.targetX = DOOR.x;
           this.targetY = SHOP.height - SHOP.wallThickness;
@@ -109,8 +119,25 @@ export class Customer {
 
       case 'leaving':
         this.moveToward(this.targetX, this.targetY, dt);
+        this.patienceBar.clear();
         break;
     }
+  }
+
+  private drawPatienceBar(): void {
+    this.patienceBar.clear();
+    const barWidth = SIZE + 4;
+    const barHeight = 3;
+    const x = -barWidth / 2;
+    const y = -SIZE / 2 - 14;
+
+    this.patienceBar.fillStyle(0x000000, 0.5);
+    this.patienceBar.fillRect(x, y, barWidth, barHeight);
+
+    const ratio = Math.max(0, this.patienceRemaining / this.maxPatience);
+    const color = ratio > 0.5 ? 0x2ecc71 : ratio > 0.25 ? 0xf39c12 : 0xe74c3c;
+    this.patienceBar.fillStyle(color, 1);
+    this.patienceBar.fillRect(x, y, barWidth * ratio, barHeight);
   }
 
   private decideAfterBrowsing(): void {
@@ -157,6 +184,7 @@ export class Customer {
   serve(): void {
     this.state = 'served';
     this.waitTimer = 0.8;
+    this.patienceBar.clear();
   }
 
   destroy(): void {

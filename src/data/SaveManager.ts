@@ -1,6 +1,7 @@
 import { GameState } from './GameState';
 import { Inventory } from './Inventory';
 import { Collection } from './Collection';
+import { PriceManager } from './PriceManager';
 
 const SAVE_KEY = 'tcg-empire-save';
 
@@ -16,13 +17,14 @@ interface SaveData {
     shelves: Record<string, number>;
   };
   collection: Record<string, number>;
+  pricing: Record<string, number>;
   savedAt: number;
 }
 
 export class SaveManager {
   static save(): void {
     const data: SaveData = {
-      version: 1,
+      version: 2,
       gameState: {
         cash: GameState.cash,
         shopLevel: GameState.shopLevel,
@@ -30,6 +32,7 @@ export class SaveManager {
       },
       inventory: Inventory.serialize(),
       collection: Collection.serialize(),
+      pricing: PriceManager.serialize(),
       savedAt: Date.now(),
     };
 
@@ -54,6 +57,10 @@ export class SaveManager {
 
       Inventory.deserialize(data.inventory);
       Collection.deserialize(data.collection);
+
+      if (data.pricing) {
+        PriceManager.deserialize(data.pricing);
+      }
 
       return true;
     } catch {

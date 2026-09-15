@@ -82,7 +82,8 @@ export class ShopScene extends Phaser.Scene {
       if (this.overlay.isVisible()) return;
       this.dayManager.endDay(
         this.customerManager.customersServedToday,
-        this.customerManager.revenueToday
+        this.customerManager.revenueToday,
+        this.customerManager.customersLostToday
       );
     });
 
@@ -94,7 +95,6 @@ export class ShopScene extends Phaser.Scene {
     this.storagePanel = new StoragePanel(this.overlay);
     this.packOpeningPanel = new PackOpeningPanel(this.overlay);
     this.collectionPanel = new CollectionPanel(this.overlay);
-
     this.storagePanel.setOnOpenPacks(() => {
       this.packOpeningPanel.show(() => {});
     });

@@ -1,10 +1,8 @@
 import Phaser from 'phaser';
 import { Customer } from '../entities/Customer';
 import { Inventory } from '../data/Inventory';
-
-const MAX_CUSTOMERS = 4;
-const SPAWN_INTERVAL_MIN = 4000;
-const SPAWN_INTERVAL_MAX = 10000;
+import { GameState } from '../data/GameState';
+import { getShopLevel } from '../data/ShopUpgrades';
 
 export class CustomerManager {
   private scene: Phaser.Scene;
@@ -14,14 +12,20 @@ export class CustomerManager {
 
   customersServedToday = 0;
   revenueToday = 0;
+  customersLostToday = 0;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     this.scheduleNextSpawn();
   }
 
+  private getLevel() {
+    return getShopLevel(GameState.shopLevel);
+  }
+
   private scheduleNextSpawn(): void {
-    const delay = Phaser.Math.Between(SPAWN_INTERVAL_MIN, SPAWN_INTERVAL_MAX);
+    const level = this.getLevel();
+    const delay = Phaser.Math.Between(level.spawnMin, level.spawnMax);
     this.spawnTimer = this.scene.time.delayedCall(delay, () => {
       this.trySpawn();
       this.scheduleNextSpawn();
@@ -30,10 +34,12 @@ export class CustomerManager {
 
   private trySpawn(): void {
     if (this.paused) return;
-    if (this.customers.length >= MAX_CUSTOMERS) return;
+    const level = this.getLevel();
+    if (this.customers.length >= level.maxCustomers) return;
     if (!Inventory.hasAnyShelfStock()) return;
 
-    const customer = new Customer(this.scene);
+    const patience = level.customerPatience;
+    const customer = new Customer(this.scene, patience);
     this.customers.push(customer);
   }
 
@@ -43,6 +49,10 @@ export class CustomerManager {
     }
 
     this.customers = this.customers.filter((c) => {
+      if (c.lostPatience && !c.counted) {
+        c.counted = true;
+        this.customersLostToday++;
+      }
       if (c.isAtDoor()) {
         c.destroy();
         return false;
@@ -77,6 +87,7 @@ export class CustomerManager {
   resetDailyStats(): void {
     this.customersServedToday = 0;
     this.revenueToday = 0;
+    this.customersLostToday = 0;
   }
 
   destroy(): void {
