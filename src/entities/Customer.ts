@@ -35,6 +35,7 @@ export class Customer {
   private maxPatience: number;
   private patienceRemaining: number;
   private patienceBar: Phaser.GameObjects.Graphics;
+  private speechBubble: Phaser.GameObjects.Container | null = null;
 
   constructor(scene: Phaser.Scene, patience: number = 15) {
     this.scene = scene;
@@ -203,8 +204,11 @@ export class Customer {
       case 'waiting':
         this.patienceRemaining -= dt;
         this.drawPatienceBar();
+        this.showSpeechBubble();
+        this.updateSpeechBubblePosition();
         if (this.patienceRemaining <= 0) {
           this.lostPatience = true;
+          this.hideSpeechBubble();
           this.state = 'leaving';
           this.targetX = DOOR.x;
           this.targetY = SHOP.height - SHOP.wallThickness;
@@ -223,6 +227,7 @@ export class Customer {
       case 'leaving':
         this.moveToward(this.targetX, this.targetY, dt);
         this.patienceBar.clear();
+        this.hideSpeechBubble();
         break;
     }
   }
@@ -284,13 +289,48 @@ export class Customer {
     return this.state === 'waiting';
   }
 
+  private showSpeechBubble(): void {
+    if (this.speechBubble || !this.desiredProduct) return;
+    const colorHex = this.desiredProduct.color;
+    const g = this.scene.add.graphics();
+    g.fillStyle(0xffffff, 0.9);
+    g.fillRoundedRect(-22, -20, 44, 24, 6);
+    g.fillTriangle(-4, 4, 4, 4, 0, 10);
+    g.fillStyle(colorHex, 1);
+    g.fillRoundedRect(-12, -14, 10, 14, 2);
+    const icon = this.desiredProduct.category === 'booster' ? '!' : '?';
+    const txt = this.scene.add.text(6, -12, icon, {
+      fontFamily: 'Arial',
+      fontSize: '10px',
+      color: '#333',
+      fontStyle: 'bold',
+    });
+    this.speechBubble = this.scene.add.container(this.sprite.x, this.sprite.y - 30, [g, txt]);
+    this.speechBubble.setDepth(15);
+  }
+
+  private hideSpeechBubble(): void {
+    if (this.speechBubble) {
+      this.speechBubble.destroy();
+      this.speechBubble = null;
+    }
+  }
+
+  private updateSpeechBubblePosition(): void {
+    if (this.speechBubble) {
+      this.speechBubble.setPosition(this.sprite.x, this.sprite.y - 30);
+    }
+  }
+
   serve(): void {
     this.state = 'served';
     this.waitTimer = 0.8;
     this.patienceBar.clear();
+    this.hideSpeechBubble();
   }
 
   destroy(): void {
+    this.hideSpeechBubble();
     this.sprite.destroy();
   }
 }

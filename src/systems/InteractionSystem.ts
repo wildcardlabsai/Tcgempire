@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { FURNITURE, FurnitureItem } from '../config/shop-layout';
 
-const INTERACT_RANGE = 50;
+const INTERACT_RANGE = 60;
 const POPUP_DURATION = 2000;
 
 export type InteractionHandler = (item: FurnitureItem) => void;
@@ -99,5 +99,9 @@ export class InteractionSystem {
 
   hasNearbyInteractable(px: number, py: number): boolean {
     return this.findNearest(px, py) !== null;
+  }
+
+  getNearbyInteractable(px: number, py: number): FurnitureItem | null {
+    return this.findNearest(px, py);
   }
 }

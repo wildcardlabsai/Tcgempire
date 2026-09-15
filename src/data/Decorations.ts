@@ -141,16 +141,16 @@ export interface PlacedDecoration {
 }
 
 const PLACEMENT_SLOTS: { x: number; y: number }[] = [
-  { x: 180, y: 30 },
-  { x: 240, y: 30 },
+  { x: 220, y: 30 },
   { x: 300, y: 30 },
-  { x: 360, y: 30 },
-  { x: 200, y: 250 },
-  { x: 320, y: 280 },
-  { x: 440, y: 280 },
-  { x: 300, y: 420 },
-  { x: 200, y: 420 },
+  { x: 380, y: 30 },
+  { x: 460, y: 30 },
+  { x: 250, y: 320 },
   { x: 400, y: 350 },
+  { x: 550, y: 350 },
+  { x: 350, y: 500 },
+  { x: 250, y: 500 },
+  { x: 500, y: 460 },
 ];
 
 class DecorationManager {

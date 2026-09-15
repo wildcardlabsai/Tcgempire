@@ -17,6 +17,7 @@ import { CollectionPanel } from '../ui/CollectionPanel';
 import { SHOP, PLAYER_START } from '../config/shop-layout';
 import { Inventory } from '../data/Inventory';
 import { SaveManager } from '../data/SaveManager';
+import { GameState } from '../data/GameState';
 
 const SPEED = 160;
 
@@ -41,7 +42,9 @@ export class ShopScene extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: Record<string, Phaser.Input.Keyboard.Key>;
   private interactKey!: Phaser.Input.Keyboard.Key;
-  private interactHint!: Phaser.GameObjects.Text;
+  private interactHint!: Phaser.GameObjects.Container;
+
+  private lowStockWarned = false;
 
   constructor() {
     super({ key: 'ShopScene' });
@@ -101,6 +104,9 @@ export class ShopScene extends Phaser.Scene {
     this.computerPanel.setOnDecorationChange(() => {
       this.shopRenderer.refreshDecorations();
     });
+    this.computerPanel.setOnOrder((productName: string, qty: number) => {
+      this.hud.showToast(`+${qty} ${productName} to storage`, '#3498db');
+    });
 
     this.touchControls = new TouchControls(this);
     this.touchControls.create();
@@ -116,16 +122,7 @@ export class ShopScene extends Phaser.Scene {
       this.interactKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     }
 
-    this.interactHint = this.add.text(0, 0, '[E] Interact', {
-      fontFamily: '"Segoe UI", Arial, sans-serif',
-      fontSize: '12px',
-      color: '#ffd700',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      padding: { x: 6, y: 3 },
-    });
-    this.interactHint.setOrigin(0.5);
-    this.interactHint.setDepth(99);
-    this.interactHint.setVisible(false);
+    this.createInteractHint();
 
     this.cameras.main.setBounds(0, 0, SHOP.width, SHOP.height);
     this.cameras.main.startFollow(this.player.sprite, true, 0.1, 0.1);
@@ -133,6 +130,31 @@ export class ShopScene extends Phaser.Scene {
     this.scale.on('resize', () => {
       this.touchControls.updateLayout();
     });
+
+    if (GameState.day === 1 && !SaveManager.hasSave()) {
+      this.time.delayedCall(800, () => {
+        this.hud.showToast('Walk with WASD, interact with E', '#ffd700');
+      });
+      this.time.delayedCall(2800, () => {
+        this.hud.showToast('Stock shelves, then click End Day!', '#ffd700');
+      });
+    }
+  }
+
+  private createInteractHint(): void {
+    const bg = this.add.rectangle(0, 0, 100, 26, 0x000000, 0.7);
+    bg.setStrokeStyle(1, 0xffd700, 0.5);
+
+    const text = this.add.text(0, 0, '[E] Interact', {
+      fontFamily: '"Segoe UI", Arial, sans-serif',
+      fontSize: '12px',
+      color: '#ffd700',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    this.interactHint = this.add.container(0, 0, [bg, text]);
+    this.interactHint.setDepth(99);
+    this.interactHint.setVisible(false);
   }
 
   private setupInteractions(): void {
@@ -144,6 +166,7 @@ export class ShopScene extends Phaser.Scene {
           this.customerManager.customersServedToday++;
           this.customerManager.revenueToday += revenue;
           this.hud.flashCash();
+          this.hud.showToast(`+£${revenue.toFixed(2)}`, '#2ecc71');
           this.shopRenderer.refreshProducts();
         });
       } else {
@@ -155,6 +178,7 @@ export class ShopScene extends Phaser.Scene {
       if (this.overlay.isVisible()) return;
       this.shelfPanel.show(() => {}, () => {
         this.shopRenderer.refreshProducts();
+        this.hud.showToast('Shelves stocked!', '#f39c12');
       });
     });
 
@@ -162,6 +186,7 @@ export class ShopScene extends Phaser.Scene {
       if (this.overlay.isVisible()) return;
       this.shelfPanel.show(() => {}, () => {
         this.shopRenderer.refreshProducts();
+        this.hud.showToast('Shelves stocked!', '#f39c12');
       });
     });
 
@@ -190,6 +215,7 @@ export class ShopScene extends Phaser.Scene {
     this.hud.update(delta);
     this.updateInteractHint();
     this.handleInteraction();
+    this.checkLowStock();
   }
 
   private handleInput(): void {
@@ -215,13 +241,27 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private updateInteractHint(): void {
-    const nearby = this.interaction.hasNearbyInteractable(this.player.x, this.player.y);
-    this.interactHint.setVisible(nearby);
+    const nearby = this.interaction.getNearbyInteractable(this.player.x, this.player.y);
+    this.interactHint.setVisible(nearby !== null);
     if (nearby) {
-      this.interactHint.setPosition(this.player.x, this.player.y - 28);
+      this.interactHint.setPosition(this.player.x, this.player.y - 34);
+      const text = this.interactHint.getAt(1) as Phaser.GameObjects.Text;
       if (this.touchControls.visible) {
-        this.interactHint.setText('Tap E');
+        text.setText('Tap E');
+      } else {
+        text.setText(`[E] ${nearby.label}`);
       }
+      const bg = this.interactHint.getAt(0) as Phaser.GameObjects.Rectangle;
+      bg.setSize(text.width + 16, 26);
+    }
+  }
+
+  private checkLowStock(): void {
+    if (this.lowStockWarned) return;
+    if (!Inventory.hasAnyShelfStock() && this.dayManager.isOpen() && this.customerManager.getCustomerCount() > 0) {
+      this.lowStockWarned = true;
+      this.hud.showToast('Shelves empty! Stock up at the shelves.', '#e74c3c');
+      this.time.delayedCall(30000, () => { this.lowStockWarned = false; });
     }
   }
 }

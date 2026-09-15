@@ -15,6 +15,7 @@ export class ComputerPanel {
   private overlay: UIOverlay;
   private currentTab: TabId = 'order';
   private onDecorationChange: (() => void) | null = null;
+  private onOrderCallback: ((productName: string, qty: number) => void) | null = null;
 
   constructor(overlay: UIOverlay) {
     this.overlay = overlay;
@@ -22,6 +23,10 @@ export class ComputerPanel {
 
   setOnDecorationChange(cb: () => void): void {
     this.onDecorationChange = cb;
+  }
+
+  setOnOrder(cb: (productName: string, qty: number) => void): void {
+    this.onOrderCallback = cb;
   }
 
   show(onClose: () => void): void {
@@ -383,5 +388,8 @@ export class ComputerPanel {
 
     GameState.cash -= totalCost;
     Inventory.addToStorage(productId, qty);
+    if (this.onOrderCallback) {
+      this.onOrderCallback(product.name, qty);
+    }
   }
 }
