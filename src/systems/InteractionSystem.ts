@@ -4,11 +4,14 @@ import { FURNITURE, FurnitureItem } from '../config/shop-layout';
 const INTERACT_RANGE = 50;
 const POPUP_DURATION = 2000;
 
+export type InteractionHandler = (item: FurnitureItem) => void;
+
 export class InteractionSystem {
   private scene: Phaser.Scene;
   private popup: Phaser.GameObjects.Container | null = null;
   private popupTimer: Phaser.Time.TimerEvent | null = null;
   private interactables: { item: FurnitureItem; cx: number; cy: number }[] = [];
+  private handlers: Map<string, InteractionHandler> = new Map();
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -17,6 +20,10 @@ export class InteractionSystem {
       cx: f.x,
       cy: f.y,
     }));
+  }
+
+  onInteract(furnitureId: string, handler: InteractionHandler): void {
+    this.handlers.set(furnitureId, handler);
   }
 
   findNearest(px: number, py: number): FurnitureItem | null {
@@ -39,7 +46,13 @@ export class InteractionSystem {
   interact(px: number, py: number): void {
     const target = this.findNearest(px, py);
     if (!target) return;
-    this.showPopup(target.interactionMessage, px, py - 40);
+
+    const handler = this.handlers.get(target.id);
+    if (handler) {
+      handler(target);
+    } else {
+      this.showPopup(target.interactionMessage, px, py - 40);
+    }
   }
 
   showPopup(message: string, x: number, y: number): void {

@@ -45,6 +45,16 @@ class GameStateManager {
     this.state.day += 1;
   }
 
+  addCash(amount: number): void {
+    this.state.cash += amount;
+  }
+
+  spendCash(amount: number): boolean {
+    if (this.state.cash < amount) return false;
+    this.state.cash -= amount;
+    return true;
+  }
+
   reset(): void {
     this.state = { ...defaultState };
   }

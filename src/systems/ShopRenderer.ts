@@ -1,8 +1,10 @@
 import Phaser from 'phaser';
 import { SHOP, FURNITURE, DOOR } from '../config/shop-layout';
+import { Inventory } from '../data/Inventory';
 
 export class ShopRenderer {
   private scene: Phaser.Scene;
+  private productSprites: Phaser.GameObjects.GameObject[] = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -13,6 +15,14 @@ export class ShopRenderer {
     this.drawWalls();
     this.drawDoor();
     this.drawFurniture();
+    this.refreshProducts();
+  }
+
+  refreshProducts(): void {
+    for (const s of this.productSprites) {
+      s.destroy();
+    }
+    this.productSprites = [];
     this.drawProducts();
   }
 
@@ -111,9 +121,11 @@ export class ShopRenderer {
 
   private drawProducts(): void {
     const shelves = FURNITURE.filter((f) => f.id.startsWith('shelf'));
+    const shelfProducts = Inventory.getShelfProducts();
+
+    if (shelfProducts.length === 0) return;
 
     for (const shelf of shelves) {
-      const colors = [0xe74c3c, 0x3498db, 0x2ecc71, 0xf39c12, 0x9b59b6];
       const rows = 3;
       const cols = 2;
       const productW = 20;
@@ -121,21 +133,32 @@ export class ShopRenderer {
       const startY = shelf.y - shelf.height / 2 + 24;
       const gap = 50;
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const px = shelf.x - (cols - 1) * (productW + 2) / 2 + c * (productW + 2);
-          const py = startY + r * gap;
-          const color = colors[(r * cols + c) % colors.length];
+      let slotIndex = 0;
+      for (const { product, quantity } of shelfProducts) {
+        if (slotIndex >= rows * cols) break;
 
-          const pack = this.scene.add.rectangle(px, py, productW, productH, color);
-          pack.setStrokeStyle(1, 0x000000, 0.3);
-          pack.setDepth(4);
+        const r = Math.floor(slotIndex / cols);
+        const c = slotIndex % cols;
+        const px = shelf.x - (cols - 1) * (productW + 2) / 2 + c * (productW + 2);
+        const py = startY + r * gap;
 
-          const star = this.scene.add.star(px, py - 4, 5, 3, 6, 0xffd700);
-          star.setDepth(5);
-          star.setAlpha(0.8);
-          star.setScale(0.5);
-        }
+        const pack = this.scene.add.rectangle(px, py, productW, productH, product.color);
+        pack.setStrokeStyle(1, 0x000000, 0.3);
+        pack.setDepth(4);
+        this.productSprites.push(pack);
+
+        const qtyLabel = this.scene.add.text(px, py + productH / 2 + 6, `×${quantity}`, {
+          fontFamily: 'Arial, sans-serif',
+          fontSize: '8px',
+          color: '#ffffff',
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          padding: { x: 2, y: 1 },
+        });
+        qtyLabel.setOrigin(0.5);
+        qtyLabel.setDepth(5);
+        this.productSprites.push(qtyLabel);
+
+        slotIndex++;
       }
     }
   }
