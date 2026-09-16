@@ -40,7 +40,7 @@ export class BootScene extends Phaser.Scene {
     const source = sheet.getSourceImage() as HTMLImageElement;
     const fw = 352;
     const fh = 279;
-    const directions: string[] = ['down', 'right', 'left', 'up'];
+    const directions: string[] = ['down', 'left', 'right', 'up'];
 
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
@@ -62,7 +62,7 @@ export class BootScene extends Phaser.Scene {
 
     const charW = 384;
     const charH = 341;
-    const frameW = 128;
+    const frameW = 96;
     const frameH = 85;
 
     for (let charRow = 0; charRow < 3; charRow++) {

@@ -5,7 +5,7 @@ import { Product } from '../data/Products';
 
 const CUSTOMER_SPEED = 55;
 const SIZE = 18;
-const DISPLAY_SIZE = 32;
+const DISPLAY_SIZE = 46;
 
 const SKIN_COLORS = [0xf5c6a0, 0xd4a07a, 0xc68642, 0x8d5524, 0xffdbac];
 const SHIRT_COLORS = [0x5dade2, 0x58d68d, 0xf0b27a, 0xbb8fce, 0xf1948a, 0x85c1e9, 0xabebc6];
