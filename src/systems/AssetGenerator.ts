@@ -1,6 +1,12 @@
 import Phaser from 'phaser';
 
 function ctx(scene: Phaser.Scene, key: string, w: number, h: number): [CanvasRenderingContext2D, () => void] {
+  if (scene.textures.exists(key)) {
+    const offscreen = document.createElement('canvas');
+    offscreen.width = w;
+    offscreen.height = h;
+    return [offscreen.getContext('2d')!, () => {}];
+  }
   const ct = scene.textures.createCanvas(key, w, h);
   if (!ct) throw new Error(`Failed to create canvas texture: ${key}`);
   const c = ct.getContext();
