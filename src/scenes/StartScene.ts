@@ -12,8 +12,7 @@ export class StartScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const embeddedUrl = (window as unknown as Record<string, unknown>).__startScreenUrl as string | undefined;
-    this.load.image('start-screen', embeddedUrl || 'images/start-screen.png');
+    this.load.image('start-screen', 'images/start-screen.png');
   }
 
   create(): void {
