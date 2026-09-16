@@ -24,9 +24,6 @@ export class StartScene extends Phaser.Scene {
       this.createFallback(w, h);
     }
 
-    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
-      this.scene.restart();
-    });
   }
 
   private createWithImage(w: number, h: number): void {
