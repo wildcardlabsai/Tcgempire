@@ -45,9 +45,11 @@ export class HUD {
       fontSize: '13px',
       color: color,
       fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 3,
     }).setOrigin(0.5);
 
-    const bg = this.scene.add.rectangle(0, 0, text.width + 20, 28, 0x000000, 0.7);
+    const bg = this.scene.add.rectangle(0, 0, text.width + 24, 30, 0x0a0a1a, 0.85);
     bg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(color).color, 0.5);
 
     const toast = this.scene.add.container(cam.width / 2, y, [bg, text]);
@@ -68,61 +70,71 @@ export class HUD {
 
   private create(): void {
     const cam = this.scene.cameras.main;
+    const barH = 38;
 
-    // Top bar background — full width, compact
-    const barHeight = 36;
-    const barBg = this.scene.add.rectangle(cam.width / 2, barHeight / 2, cam.width, barHeight, 0x1a1a2e, 0.85);
-    barBg.setStrokeStyle(1, 0xd4a854, 0.4);
+    const barBg = this.scene.textures.exists('hud-bar')
+      ? this.scene.add.image(cam.width / 2, barH / 2, 'hud-bar')
+      : this.scene.add.rectangle(cam.width / 2, barH / 2, cam.width, barH, 0x1a1a2e, 0.88);
 
-    // Gold accent line at bottom of bar
-    const accentLine = this.scene.add.rectangle(cam.width / 2, barHeight, cam.width, 2, 0xd4a854, 0.5);
+    if (barBg instanceof Phaser.GameObjects.Rectangle) {
+      barBg.setStrokeStyle(1, 0xd4a854, 0.4);
+    }
 
-    const iconStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-      fontFamily: '"Segoe UI", Arial, sans-serif',
-      fontSize: '13px',
+    const accentLine = this.scene.add.rectangle(cam.width / 2, barH, cam.width, 2, 0xd4a854, 0.5);
+
+    const iconFont: Phaser.Types.GameObjects.Text.TextStyle = {
+      fontFamily: '"Georgia", serif',
+      fontSize: '12px',
       color: '#d4a854',
       fontStyle: 'bold',
     };
-    const valStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+    const valFont: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: '"Segoe UI", Arial, sans-serif',
       fontSize: '13px',
       color: '#ffffff',
+      fontStyle: 'bold',
     };
-    const dimStyle: Phaser.Types.GameObjects.Text.TextStyle = {
+    const dimFont: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: '"Segoe UI", Arial, sans-serif',
       fontSize: '11px',
       color: '#aaaaaa',
     };
 
-    // Layout: left section has cash + day + level, right has customers + rating + end day
-    let xPos = 12;
+    let xPos = 14;
 
-    // Cash icon + value
-    const cashIcon = this.scene.add.text(xPos, barHeight / 2, '£', iconStyle).setOrigin(0, 0.5);
-    xPos += cashIcon.width + 2;
-    this.cashText = this.scene.add.text(xPos, barHeight / 2, '', valStyle).setOrigin(0, 0.5);
-    xPos += 70;
+    const cashIcon = this.scene.add.text(xPos, barH / 2, '£', { ...iconFont, fontSize: '15px' }).setOrigin(0, 0.5);
+    xPos += cashIcon.width + 3;
+    this.cashText = this.scene.add.text(xPos, barH / 2, '', valFont).setOrigin(0, 0.5);
+    xPos += 72;
 
-    // Day
-    const dayIcon = this.scene.add.text(xPos, barHeight / 2, 'Day', iconStyle).setOrigin(0, 0.5);
-    xPos += dayIcon.width + 4;
-    this.dayText = this.scene.add.text(xPos, barHeight / 2, '', valStyle).setOrigin(0, 0.5);
+    const divider1 = this.scene.add.rectangle(xPos, barH / 2, 1, 20, 0xd4a854, 0.2);
+    xPos += 10;
+
+    const dayLabel = this.scene.add.text(xPos, barH / 2, 'DAY', { ...dimFont, fontSize: '8px', color: '#8a7a5a' }).setOrigin(0, 0.5);
+    xPos += dayLabel.width + 4;
+    this.dayText = this.scene.add.text(xPos, barH / 2, '', valFont).setOrigin(0, 0.5);
     xPos += 30;
 
-    // Level
-    const lvlIcon = this.scene.add.text(xPos, barHeight / 2, 'Lv', iconStyle).setOrigin(0, 0.5);
-    xPos += lvlIcon.width + 4;
-    this.levelText = this.scene.add.text(xPos, barHeight / 2, '', valStyle).setOrigin(0, 0.5);
-    xPos += 30;
+    const divider2 = this.scene.add.rectangle(xPos, barH / 2, 1, 20, 0xd4a854, 0.2);
+    xPos += 10;
 
-    // Customers
-    this.customerText = this.scene.add.text(xPos, barHeight / 2, '', dimStyle).setOrigin(0, 0.5);
-    xPos += 60;
+    const lvlLabel = this.scene.add.text(xPos, barH / 2, 'LV', { ...dimFont, fontSize: '8px', color: '#8a7a5a' }).setOrigin(0, 0.5);
+    xPos += lvlLabel.width + 4;
+    this.levelText = this.scene.add.text(xPos, barH / 2, '', valFont).setOrigin(0, 0.5);
+    xPos += 26;
 
-    // Rating — stars
-    this.ratingText = this.scene.add.text(xPos, barHeight / 2, '', {
-      ...dimStyle,
+    const divider3 = this.scene.add.rectangle(xPos, barH / 2, 1, 20, 0xd4a854, 0.2);
+    xPos += 10;
+
+    const custIcon = this.scene.add.text(xPos, barH / 2, '👤', { fontSize: '11px' }).setOrigin(0, 0.5);
+    xPos += custIcon.width + 3;
+    this.customerText = this.scene.add.text(xPos, barH / 2, '', dimFont).setOrigin(0, 0.5);
+    xPos += 24;
+
+    this.ratingText = this.scene.add.text(xPos, barH / 2, '', {
+      ...dimFont,
       color: '#d4a854',
+      fontSize: '12px',
     }).setOrigin(0, 0.5);
 
     this.container = this.scene.add.container(0, 0, [
@@ -130,29 +142,42 @@ export class HUD {
       accentLine,
       cashIcon,
       this.cashText,
-      dayIcon,
+      divider1,
+      dayLabel,
       this.dayText,
-      lvlIcon,
+      divider2,
+      lvlLabel,
       this.levelText,
+      divider3,
+      custIcon,
       this.customerText,
       this.ratingText,
     ]);
     this.container.setDepth(200);
     this.container.setScrollFactor(0);
 
-    // End Day button — polished style
-    const btnW = 90;
+    const btnW = 92;
     const btnH = 28;
-    const btnBg = this.scene.add.rectangle(0, 0, btnW, btnH, 0x8b2252);
-    btnBg.setStrokeStyle(1, 0xd4a854, 0.6);
-    const btnText = this.scene.add.text(0, 0, 'End Day', {
+
+    const btnShadow = this.scene.add.rectangle(1, 1, btnW, btnH, 0x000000, 0.3);
+    btnShadow.setStrokeStyle(0, 0x000000, 0);
+
+    const btnBg = this.scene.add.graphics();
+    btnBg.fillStyle(0x8b2252, 1);
+    btnBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 6);
+    btnBg.fillStyle(0xa63272, 0.3);
+    btnBg.fillRoundedRect(-btnW / 2 + 2, -btnH / 2 + 2, btnW - 4, btnH / 2, { tl: 4, tr: 4, bl: 0, br: 0 });
+    btnBg.lineStyle(1, 0xd4a854, 0.5);
+    btnBg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 6);
+
+    const btnText = this.scene.add.text(0, 0, '☾  End Day', {
       fontFamily: '"Segoe UI", Arial, sans-serif',
-      fontSize: '12px',
+      fontSize: '11px',
       color: '#ffffff',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.endDayButton = this.scene.add.container(0, 0, [btnBg, btnText]);
+    this.endDayButton = this.scene.add.container(0, 0, [btnShadow, btnBg, btnText]);
     this.endDayButton.setSize(btnW, btnH);
     this.endDayButton.setInteractive({ useHandCursor: true });
     this.endDayButton.setDepth(201);
@@ -162,12 +187,10 @@ export class HUD {
       if (this.onEndDay) this.onEndDay();
     });
     this.endDayButton.on('pointerover', () => {
-      btnBg.setFillStyle(0xa63272);
-      this.scene.tweens.add({ targets: [btnBg, btnText], scaleX: 1.05, scaleY: 1.05, duration: 80 });
+      this.scene.tweens.add({ targets: this.endDayButton, scaleX: 1.05, scaleY: 1.05, duration: 80 });
     });
     this.endDayButton.on('pointerout', () => {
-      btnBg.setFillStyle(0x8b2252);
-      this.scene.tweens.add({ targets: [btnBg, btnText], scaleX: 1, scaleY: 1, duration: 80 });
+      this.scene.tweens.add({ targets: this.endDayButton, scaleX: 1, scaleY: 1, duration: 80 });
     });
 
     this.updateButtonPosition();
@@ -196,7 +219,7 @@ export class HUD {
 
   private updateButtonPosition(): void {
     const cam = this.scene.cameras.main;
-    this.endDayButton.setPosition(cam.width - 56, 18);
+    this.endDayButton.setPosition(cam.width - 56, 19);
   }
 
   update(delta: number): void {

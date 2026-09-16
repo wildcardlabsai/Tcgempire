@@ -11,10 +11,6 @@ export class StartScene extends Phaser.Scene {
     super({ key: 'StartScene' });
   }
 
-  preload(): void {
-    this.load.image('start-screen', 'images/start-screen.png');
-  }
-
   create(): void {
     const { width, height } = this.scale;
     this.cameras.main.setBackgroundColor('#1a1a2e');
@@ -30,7 +26,6 @@ export class StartScene extends Phaser.Scene {
   }
 
   private createWithImage(w: number, h: number): void {
-    // Full-bleed background image — cover the entire canvas
     const bg = this.add.image(w / 2, h / 2, 'start-screen');
     const scaleX = w / bg.width;
     const scaleY = h / bg.height;
@@ -38,16 +33,12 @@ export class StartScene extends Phaser.Scene {
     bg.setScale(bgScale);
     bg.setDepth(0);
 
-    // The image already has the logo, taglines, cards, counter, loading bar.
-    // We just need invisible hit areas for the buttons and the loading bar animation.
-
     const hasSave = SaveManager.hasSave();
 
     if (hasSave) {
       const saveInfo = SaveManager.getSaveInfo();
 
-      // CONTINUE button over the PLAY button area in the image
-      const continueBtn = this.createImageButton(w / 2, h * 0.545, 200, 50, 'CONTINUE  ▶', () => {
+      const continueBtn = this.createStyledButton(w / 2, h * 0.545, 200, 50, 'CONTINUE  ▶', () => {
         SaveManager.load();
         this.startGame();
       });
@@ -64,7 +55,6 @@ export class StartScene extends Phaser.Scene {
         infoText.setDepth(12);
       }
 
-      // NEW GAME below
       const newY = h * 0.645;
       const newBg = this.add.rectangle(w / 2, newY, 140, 32, 0x000000, 0.5);
       newBg.setStrokeStyle(1, 0xd4a854, 0.6);
@@ -98,16 +88,11 @@ export class StartScene extends Phaser.Scene {
         this.startGame();
       });
 
-      // Entrance animations
       [continueBtn, newBg, newText].forEach((el) => {
         el.setAlpha(0);
         this.tweens.add({ targets: el, alpha: 1, duration: 400, delay: 600, ease: 'Power2' });
       });
-      if (saveInfo) {
-        // info text also fades in
-      }
     } else {
-      // Invisible clickable area over the PLAY button in the image
       const playHit = this.add.rectangle(w / 2, h * 0.545, 220, 55, 0x000000, 0);
       playHit.setInteractive({ useHandCursor: true });
       playHit.setDepth(10);
@@ -128,16 +113,12 @@ export class StartScene extends Phaser.Scene {
       });
     }
 
-    // Animated loading bar overlay matching the image's loading bar position
     this.drawLoadingBar(w, h);
-
-    // Gold sparkles for extra polish
     this.createSparkles(w, h);
   }
 
-  private createImageButton(x: number, y: number, bw: number, bh: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
+  private createStyledButton(x: number, y: number, bw: number, bh: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
     const btnBg = this.add.graphics();
-    // Golden pill button drawn over the image's button area
     btnBg.fillStyle(0xf0b030);
     btnBg.fillRoundedRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
     btnBg.fillStyle(0xffcc44, 0.4);
@@ -171,14 +152,12 @@ export class StartScene extends Phaser.Scene {
   }
 
   private createFallback(w: number, h: number): void {
-    // Fallback procedural start screen when image isn't available
     this.cameras.main.setBackgroundColor('#1a1a2e');
 
     const g = this.add.graphics();
     g.fillGradientStyle(0x2a1f14, 0x2a1f14, 0x1a1a2e, 0x1a1a2e);
     g.fillRect(0, 0, w, h);
 
-    // Logo
     const shield = this.add.graphics();
     shield.setDepth(5);
     const logoY = h * 0.22;
@@ -187,7 +166,6 @@ export class StartScene extends Phaser.Scene {
     shield.lineStyle(3, 0xd4a854);
     shield.strokeRoundedRect(w / 2 - 130, logoY - 55, 260, 90, 12);
 
-    // Crown
     const crownX = w / 2;
     const crownY = logoY - 52;
     shield.fillStyle(0xd4a854);
@@ -220,7 +198,12 @@ export class StartScene extends Phaser.Scene {
       strokeThickness: 4,
     }).setOrigin(0.5).setDepth(6);
 
-    // Taglines
+    this.add.text(w / 2, logoY + 46, 'GENESIS TCG OFFICIAL RETAILER', {
+      fontFamily: '"Segoe UI", Arial, sans-serif',
+      fontSize: '10px',
+      color: '#8a7a5a',
+    }).setOrigin(0.5).setDepth(6).setAlpha(0.8);
+
     const taglines = ['Build your shop.', 'Build your collection.', 'Build your empire.'];
     const tagY = h * 0.46;
     taglines.forEach((line, i) => {
@@ -233,17 +216,15 @@ export class StartScene extends Phaser.Scene {
       this.tweens.add({ targets: t, alpha: 1, y: t.y - 5, duration: 500, delay: 400 + i * 150, ease: 'Power2' });
     });
 
-    // Entrance animation for logo
     [shield, tcgText, empireText].forEach((el, i) => {
       el.setAlpha(0);
       this.tweens.add({ targets: el, alpha: 1, duration: 600, delay: i * 80, ease: 'Back.easeOut' });
     });
 
-    // Buttons
     const hasSave = SaveManager.hasSave();
     if (hasSave) {
       const saveInfo = SaveManager.getSaveInfo();
-      this.createImageButton(w / 2, h * 0.62, 200, 50, 'CONTINUE  ▶', () => {
+      this.createStyledButton(w / 2, h * 0.62, 200, 50, 'CONTINUE  ▶', () => {
         SaveManager.load();
         this.startGame();
       });
@@ -284,7 +265,7 @@ export class StartScene extends Phaser.Scene {
         this.startGame();
       });
     } else {
-      this.createImageButton(w / 2, h * 0.62, 220, 50, 'PLAY  ▶', () => {
+      this.createStyledButton(w / 2, h * 0.62, 220, 50, 'PLAY  ▶', () => {
         GameState.reset();
         Inventory.reset();
         Collection.reset();
