@@ -18,6 +18,7 @@ import { SHOP, PLAYER_START } from '../config/shop-layout';
 import { Inventory } from '../data/Inventory';
 import { SaveManager } from '../data/SaveManager';
 import { GameState } from '../data/GameState';
+import { SoundManager } from '../systems/SoundManager';
 
 const SPEED = 160;
 
@@ -92,6 +93,7 @@ export class ShopScene extends Phaser.Scene {
     this.hud = new HUD(this);
     this.hud.setOnEndDay(() => {
       if (this.overlay.isVisible()) return;
+      SoundManager.dayEnd();
       this.dayManager.endDay(
         this.customerManager.customersServedToday,
         this.customerManager.revenueToday,
@@ -203,6 +205,7 @@ export class ShopScene extends Phaser.Scene {
           this.customerManager.customersServedToday++;
           this.customerManager.revenueToday += revenue;
           this.hud.flashCash();
+          SoundManager.coinDrop();
           this.hud.showToast(`+£${revenue.toFixed(2)}`, '#2ecc71');
           this.shopRenderer.refreshProducts();
         });
@@ -213,35 +216,40 @@ export class ShopScene extends Phaser.Scene {
 
     this.interaction.onInteract('shelf-left', () => {
       if (this.overlay.isVisible()) return;
-      this.shelfPanel.show(() => {}, () => {
+      this.shelfPanel.show(() => { SoundManager.openPanel(); }, () => {
         this.shopRenderer.refreshProducts();
+        SoundManager.stockShelf();
         this.hud.showToast('Shelves stocked!', '#f39c12');
       });
     });
 
     this.interaction.onInteract('shelf-right', () => {
       if (this.overlay.isVisible()) return;
-      this.shelfPanel.show(() => {}, () => {
+      this.shelfPanel.show(() => { SoundManager.openPanel(); }, () => {
         this.shopRenderer.refreshProducts();
+        SoundManager.stockShelf();
         this.hud.showToast('Shelves stocked!', '#f39c12');
       });
     });
 
     this.interaction.onInteract('shelf-center', () => {
       if (this.overlay.isVisible()) return;
-      this.shelfPanel.show(() => {}, () => {
+      this.shelfPanel.show(() => { SoundManager.openPanel(); }, () => {
         this.shopRenderer.refreshProducts();
+        SoundManager.stockShelf();
         this.hud.showToast('Shelves stocked!', '#f39c12');
       });
     });
 
     this.interaction.onInteract('computer', () => {
       if (this.overlay.isVisible()) return;
+      SoundManager.openPanel();
       this.computerPanel.show(() => {});
     });
 
     this.interaction.onInteract('storage', () => {
       if (this.overlay.isVisible()) return;
+      SoundManager.openPanel();
       this.storagePanel.show(() => {});
     });
   }

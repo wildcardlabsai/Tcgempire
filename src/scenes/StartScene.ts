@@ -3,6 +3,7 @@ import { SaveManager } from '../data/SaveManager';
 import { GameState } from '../data/GameState';
 import { Inventory } from '../data/Inventory';
 import { Collection } from '../data/Collection';
+import { SoundManager } from '../systems/SoundManager';
 import { PriceManager } from '../data/PriceManager';
 import { Decorations } from '../data/Decorations';
 
@@ -110,6 +111,7 @@ export class StartScene extends Phaser.Scene {
       this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 80 });
     });
     container.on('pointerdown', () => {
+      SoundManager.buttonClick();
       this.tweens.add({
         targets: container,
         scaleX: 0.95,
