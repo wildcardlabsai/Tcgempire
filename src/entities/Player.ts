@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { SHOP } from '../config/shop-layout';
 
 const SPEED = 160;
-const SIZE = 24;
+const DISPLAY_SIZE = 48;
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 
@@ -16,35 +16,31 @@ export class Player {
   private animTimer = 0;
   private isMoving = false;
   private playerImage: Phaser.GameObjects.Image | null = null;
+  private hasSprites = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
+    this.hasSprites = scene.textures.exists('player-down-0');
 
-    const hasTextures = scene.textures.exists('player-down-0');
-
-    if (hasTextures) {
+    if (this.hasSprites) {
       this.playerImage = scene.add.image(0, 0, 'player-down-0');
+      this.playerImage.setDisplaySize(DISPLAY_SIZE, DISPLAY_SIZE * 1.2);
       this.sprite = scene.add.container(x, y, [this.playerImage]);
     } else {
       const g = this.drawFallbackCharacter(scene);
       this.sprite = scene.add.container(x, y, [g]);
     }
 
-    this.sprite.setSize(SIZE, SIZE);
+    this.sprite.setSize(DISPLAY_SIZE * 0.5, DISPLAY_SIZE * 0.5);
     this.sprite.setDepth(10);
   }
 
   private drawFallbackCharacter(scene: Phaser.Scene): Phaser.GameObjects.Graphics {
     const g = scene.add.graphics();
     g.fillStyle(0x000000, 0.18);
-    g.fillEllipse(0, SIZE / 2 + 3, SIZE + 8, 10);
-    g.fillStyle(0x2c3e6b);
-    g.fillRoundedRect(-7, 5, 6, 13, 2);
-    g.fillRoundedRect(1, 5, 6, 13, 2);
+    g.fillEllipse(0, 14, 28, 10);
     g.fillStyle(0x8b2252);
     g.fillRoundedRect(-10, -8, 20, 15, 4);
-    g.fillStyle(0x2c2c4a);
-    g.fillRoundedRect(-9, 0, 18, 7, 2);
     g.fillStyle(0xf0be8a);
     g.fillCircle(0, -18, 10);
     g.fillStyle(0x3a2210);
@@ -68,7 +64,7 @@ export class Player {
     let nx = this.sprite.x + this.vx * dt;
     let ny = this.sprite.y + this.vy * dt;
 
-    const half = SIZE / 2;
+    const half = DISPLAY_SIZE * 0.25;
     const wallT = SHOP.wallThickness;
     nx = Phaser.Math.Clamp(nx, wallT + half, SHOP.width - wallT - half);
     ny = Phaser.Math.Clamp(ny, wallT + half, SHOP.height - wallT - half);
@@ -86,12 +82,12 @@ export class Player {
       }
     }
 
-    if (this.playerImage) {
+    if (this.playerImage && this.hasSprites) {
       this.animTimer += dt;
       if (this.isMoving) {
-        if (this.animTimer > 0.18) {
+        if (this.animTimer > 0.15) {
           this.animTimer = 0;
-          this.animFrame = (this.animFrame + 1) % 3;
+          this.animFrame = (this.animFrame + 1) % 4;
         }
       } else {
         this.animFrame = 0;
@@ -101,6 +97,7 @@ export class Player {
       const key = `player-${this.direction}-${this.animFrame}`;
       if (this.scene.textures.exists(key)) {
         this.playerImage.setTexture(key);
+        this.playerImage.setDisplaySize(DISPLAY_SIZE, DISPLAY_SIZE * 1.2);
       }
     }
   }

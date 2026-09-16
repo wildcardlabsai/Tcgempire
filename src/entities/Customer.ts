@@ -5,6 +5,7 @@ import { Product } from '../data/Products';
 
 const CUSTOMER_SPEED = 60;
 const SIZE = 20;
+const DISPLAY_SIZE = 36;
 
 const SKIN_COLORS = [0xf5c6a0, 0xd4a07a, 0xc68642, 0x8d5524, 0xffdbac];
 const SHIRT_COLORS = [0x5dade2, 0x58d68d, 0xf0b27a, 0xbb8fce, 0xf1948a, 0x85c1e9, 0xabebc6];
@@ -36,19 +37,29 @@ export class Customer {
   private patienceRemaining: number;
   private patienceBar: Phaser.GameObjects.Graphics;
   private speechBubble: Phaser.GameObjects.Container | null = null;
+  private customerImage: Phaser.GameObjects.Image | null = null;
 
   constructor(scene: Phaser.Scene, patience: number = 15) {
     this.scene = scene;
     this.maxPatience = patience;
     this.patienceRemaining = patience;
 
-    const appearance = this.randomAppearance();
-    const g = scene.add.graphics();
-    this.drawCharacter(g, appearance);
+    const charIdx = Math.floor(Math.random() * 12);
+    const spriteKey = `customer-${charIdx}-front`;
 
     this.patienceBar = scene.add.graphics();
 
-    this.sprite = scene.add.container(DOOR.x, SHOP.height - SHOP.wallThickness - SIZE, [g, this.patienceBar]);
+    if (scene.textures.exists(spriteKey)) {
+      this.customerImage = scene.add.image(0, 0, spriteKey);
+      this.customerImage.setDisplaySize(DISPLAY_SIZE, DISPLAY_SIZE * 1.1);
+      this.sprite = scene.add.container(DOOR.x, SHOP.height - SHOP.wallThickness - SIZE, [this.customerImage, this.patienceBar]);
+    } else {
+      const appearance = this.randomAppearance();
+      const g = scene.add.graphics();
+      this.drawCharacter(g, appearance);
+      this.sprite = scene.add.container(DOOR.x, SHOP.height - SHOP.wallThickness - SIZE, [g, this.patienceBar]);
+    }
+
     this.sprite.setSize(SIZE, SIZE);
     this.sprite.setDepth(9);
 
@@ -66,92 +77,41 @@ export class Customer {
   }
 
   private drawCharacter(g: Phaser.GameObjects.Graphics, a: CustomerAppearance): void {
-    // Shadow
     g.fillStyle(0x000000, 0.15);
     g.fillEllipse(0, SIZE / 2, SIZE + 2, 6);
-
-    // Legs
     const darkerShirt = Phaser.Display.Color.IntegerToColor(a.shirtColor).darken(40).color;
     g.fillStyle(darkerShirt);
     g.fillRoundedRect(-6, 2, 5, 10, 1);
     g.fillRoundedRect(1, 2, 5, 10, 1);
-    // Shoes
-    g.fillStyle(0x333333);
-    g.fillRoundedRect(-7, 10, 6, 3, 1);
-    g.fillRoundedRect(1, 10, 6, 3, 1);
-
-    // Torso
     g.fillStyle(a.shirtColor);
     g.fillRoundedRect(-8, -6, 16, 10, 2);
-    // Shirt detail - stripe or collar
-    const shirtDetail = Phaser.Display.Color.IntegerToColor(a.shirtColor).darken(15).color;
-    g.fillStyle(shirtDetail);
-    g.fillRect(-1, -6, 2, 10);
-
-    // Arms
-    g.fillStyle(a.shirtColor);
-    g.fillRoundedRect(-11, -4, 4, 8, 1);
-    g.fillRoundedRect(7, -4, 4, 8, 1);
-    // Hands
-    g.fillStyle(a.skinColor);
-    g.fillCircle(-9, 5, 2.5);
-    g.fillCircle(9, 5, 2.5);
-
-    // Neck
-    g.fillStyle(a.skinColor);
-    g.fillRect(-2, -10, 4, 4);
-
-    // Head
     g.fillStyle(a.skinColor);
     g.fillCircle(0, -14, 8);
-
-    // Hair
     g.fillStyle(a.hairColor);
     switch (a.hairStyle) {
-      case 0: // Short crop
-        g.fillEllipse(0, -18, 14, 8);
-        break;
-      case 1: // Side part
+      case 0: g.fillEllipse(0, -18, 14, 8); break;
+      case 1:
         g.fillRoundedRect(-7, -20, 14, 7, 3);
         g.fillRoundedRect(-8, -19, 6, 6, 2);
         break;
-      case 2: // Long
+      case 2:
         g.fillEllipse(0, -18, 16, 10);
         g.fillRoundedRect(-8, -18, 4, 10, 1);
         g.fillRoundedRect(4, -18, 4, 10, 1);
         break;
-      case 3: // Spiky
+      case 3:
         g.fillTriangle(-6, -18, -3, -24, 0, -18);
         g.fillTriangle(-2, -18, 1, -25, 4, -18);
         g.fillTriangle(2, -18, 5, -23, 8, -18);
         g.fillEllipse(0, -17, 14, 6);
         break;
     }
-
-    // Eyes
     g.fillStyle(0xffffff);
-    g.fillCircle(-3, -14, 2);
-    g.fillCircle(3, -14, 2);
+    g.fillEllipse(-3, -14, 5, 4);
+    g.fillEllipse(3, -14, 5, 4);
     g.fillStyle(0x333333);
     g.fillCircle(-3, -14, 1);
     g.fillCircle(3, -14, 1);
-
-    // Mouth
-    g.lineStyle(0.8, Phaser.Display.Color.IntegerToColor(a.skinColor).darken(25).color);
-    g.beginPath();
-    g.arc(0, -10, 2, 0.2, Math.PI - 0.2);
-    g.strokePath();
-
-    // Glasses
-    if (a.hasGlasses) {
-      g.lineStyle(0.8, 0x333333);
-      g.strokeCircle(-3, -14, 2.5);
-      g.strokeCircle(3, -14, 2.5);
-      g.beginPath();
-      g.moveTo(-0.5, -14);
-      g.lineTo(0.5, -14);
-      g.strokePath();
-    }
   }
 
   private pickBrowseTarget(): void {
@@ -237,7 +197,7 @@ export class Customer {
     const barWidth = SIZE + 4;
     const barHeight = 3;
     const x = -barWidth / 2;
-    const y = -SIZE / 2 - 14;
+    const y = -DISPLAY_SIZE / 2 - 4;
 
     this.patienceBar.fillStyle(0x000000, 0.5);
     this.patienceBar.fillRect(x, y, barWidth, barHeight);
