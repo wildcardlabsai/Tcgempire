@@ -15,65 +15,114 @@ export class Player {
 
     const g = scene.add.graphics();
 
-    // Shadow
-    g.fillStyle(0x000000, 0.2);
-    g.fillEllipse(0, SIZE / 2 + 2, SIZE + 4, 8);
+    // Shadow — soft ellipse
+    g.fillStyle(0x000000, 0.18);
+    g.fillEllipse(0, SIZE / 2 + 3, SIZE + 8, 10);
 
-    // Legs
-    g.fillStyle(0x3b5998);
-    g.fillRoundedRect(-8, 4, 6, 12, 2);
-    g.fillRoundedRect(2, 4, 6, 12, 2);
-    // Shoes
-    g.fillStyle(0x4a3728);
-    g.fillRoundedRect(-9, 14, 8, 4, 1);
-    g.fillRoundedRect(1, 14, 8, 4, 1);
+    // Legs — dark denim
+    g.fillStyle(0x2c3e6b);
+    g.fillRoundedRect(-7, 5, 6, 13, 2);
+    g.fillRoundedRect(1, 5, 6, 13, 2);
 
-    // Torso
-    g.fillStyle(0xd44030);
-    g.fillRoundedRect(-10, -8, 20, 14, 3);
-    // Shirt collar
-    g.fillStyle(0xf0f0f0);
-    g.fillTriangle(-4, -8, 4, -8, 0, -4);
-    // Pocket
-    g.fillStyle(0xb83020);
-    g.fillRect(3, -2, 5, 4);
+    // Shoes — polished brown
+    g.fillStyle(0x5c3a1e);
+    g.fillRoundedRect(-8, 16, 8, 4, 2);
+    g.fillRoundedRect(0, 16, 8, 4, 2);
+    // Shoe soles
+    g.fillStyle(0x3a2512);
+    g.fillRect(-8, 19, 8, 1);
+    g.fillRect(0, 19, 8, 1);
 
-    // Arms
-    g.fillStyle(0xd44030);
-    g.fillRoundedRect(-14, -6, 5, 10, 2);
-    g.fillRoundedRect(9, -6, 5, 10, 2);
-    // Hands
-    g.fillStyle(0xf5c6a0);
-    g.fillCircle(-11, 6, 3);
-    g.fillCircle(11, 6, 3);
+    // Torso — deep burgundy polo
+    g.fillStyle(0x8b2252);
+    g.fillRoundedRect(-10, -8, 20, 15, 4);
+
+    // Collar — V-neck detail
+    g.fillStyle(0x9b3262);
+    g.fillTriangle(-4, -8, 4, -8, 0, -3);
+
+    // Polo button line
+    g.fillStyle(0xd4a854, 0.6);
+    g.fillCircle(0, -5, 1);
+    g.fillCircle(0, -2, 1);
+
+    // Apron — shop keeper's apron
+    g.fillStyle(0x2c2c4a);
+    g.fillRoundedRect(-9, 0, 18, 7, 2);
+    // Apron pocket
+    g.fillStyle(0x3a3a5c);
+    g.fillRect(-4, 1, 8, 4);
+    // Apron strap hints
+    g.lineStyle(1, 0x2c2c4a, 0.6);
+    g.lineBetween(-9, 0, -8, -6);
+    g.lineBetween(9, 0, 8, -6);
+
+    // Arms — matching polo
+    g.fillStyle(0x8b2252);
+    g.fillRoundedRect(-14, -6, 5, 11, 2);
+    g.fillRoundedRect(9, -6, 5, 11, 2);
+
+    // Hands — warm skin
+    g.fillStyle(0xf0be8a);
+    g.fillCircle(-11, 7, 3);
+    g.fillCircle(11, 7, 3);
 
     // Neck
-    g.fillStyle(0xf5c6a0);
+    g.fillStyle(0xf0be8a);
     g.fillRect(-3, -12, 6, 5);
 
-    // Head
-    g.fillStyle(0xf5c6a0);
+    // Head — warm skin tone
+    g.fillStyle(0xf0be8a);
     g.fillCircle(0, -18, 10);
-    // Hair
-    g.fillStyle(0x5c3317);
-    g.fillEllipse(0, -23, 18, 10);
-    g.fillRoundedRect(-9, -24, 18, 8, 4);
-    // Eyes
-    g.fillStyle(0x333333);
-    g.fillCircle(-3, -18, 1.5);
-    g.fillCircle(3, -18, 1.5);
-    // Mouth
+
+    // Hair — styled dark brown, slightly tousled
+    g.fillStyle(0x3a2210);
+    g.fillEllipse(0, -24, 20, 11);
+    g.fillRoundedRect(-10, -26, 20, 10, 5);
+    // Side hair
+    g.fillRoundedRect(-11, -22, 4, 6, 2);
+    g.fillRoundedRect(7, -22, 4, 6, 2);
+
+    // Ears
+    g.fillStyle(0xe8b07a);
+    g.fillCircle(-10, -18, 2.5);
+    g.fillCircle(10, -18, 2.5);
+
+    // Eyes — expressive with whites
+    g.fillStyle(0xffffff);
+    g.fillEllipse(-4, -18, 5, 4);
+    g.fillEllipse(4, -18, 5, 4);
+    g.fillStyle(0x2c1810);
+    g.fillCircle(-4, -18, 1.5);
+    g.fillCircle(4, -18, 1.5);
+    // Eye highlights
+    g.fillStyle(0xffffff, 0.8);
+    g.fillCircle(-3.5, -19, 0.7);
+    g.fillCircle(4.5, -19, 0.7);
+
+    // Eyebrows
+    g.lineStyle(1.5, 0x3a2210);
+    g.lineBetween(-6, -21, -2, -21.5);
+    g.lineBetween(2, -21.5, 6, -21);
+
+    // Nose
+    g.fillStyle(0xe0a878, 0.5);
+    g.fillCircle(0, -16, 1);
+
+    // Mouth — friendly smile
     g.lineStyle(1, 0xcc8866);
     g.beginPath();
-    g.arc(0, -14, 3, 0.2, Math.PI - 0.2);
+    g.arc(0, -13, 3, 0.3, Math.PI - 0.3);
     g.strokePath();
 
-    // Name tag on shirt
-    g.fillStyle(0xffffff, 0.8);
-    g.fillRoundedRect(-7, -4, 14, 5, 1);
+    // Name tag on apron
+    g.fillStyle(0xffffff, 0.9);
+    g.fillRoundedRect(-7, 1, 14, 5, 1);
+    g.lineStyle(0.5, 0xd4a854);
+    g.strokeRoundedRect(-7, 1, 14, 5, 1);
     g.fillStyle(0x666666);
-    g.fillRect(-5, -3, 10, 1);
-    g.fillRect(-4, -1, 8, 1);
+    g.fillRect(-5, 2.5, 10, 1);
+    g.fillRect(-4, 4, 6, 1);
 
     this.sprite = scene.add.container(x, y, [g]);
     this.sprite.setSize(SIZE, SIZE);

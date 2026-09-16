@@ -142,17 +142,26 @@ export class ShopScene extends Phaser.Scene {
   }
 
   private createInteractHint(): void {
-    const bg = this.add.rectangle(0, 0, 100, 26, 0x000000, 0.7);
-    bg.setStrokeStyle(1, 0xffd700, 0.5);
+    const bg = this.add.rectangle(0, 0, 100, 24, 0x1a1a2e, 0.85);
+    bg.setStrokeStyle(1, 0xd4a854, 0.6);
 
-    const text = this.add.text(0, 0, '[E] Interact', {
+    const keyBg = this.add.rectangle(-38, 0, 18, 18, 0xd4a854, 0.2);
+    keyBg.setStrokeStyle(1, 0xd4a854, 0.8);
+
+    const keyText = this.add.text(-38, 0, 'E', {
       fontFamily: '"Segoe UI", Arial, sans-serif',
-      fontSize: '12px',
-      color: '#ffd700',
+      fontSize: '11px',
+      color: '#d4a854',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.interactHint = this.add.container(0, 0, [bg, text]);
+    const label = this.add.text(-18, 0, 'Interact', {
+      fontFamily: '"Segoe UI", Arial, sans-serif',
+      fontSize: '11px',
+      color: '#ffffff',
+    }).setOrigin(0, 0.5);
+
+    this.interactHint = this.add.container(0, 0, [bg, keyBg, keyText, label]);
     this.interactHint.setDepth(99);
     this.interactHint.setVisible(false);
   }
@@ -245,14 +254,18 @@ export class ShopScene extends Phaser.Scene {
     this.interactHint.setVisible(nearby !== null);
     if (nearby) {
       this.interactHint.setPosition(this.player.x, this.player.y - 34);
-      const text = this.interactHint.getAt(1) as Phaser.GameObjects.Text;
+      const label = this.interactHint.getAt(3) as Phaser.GameObjects.Text;
+      const keyText = this.interactHint.getAt(2) as Phaser.GameObjects.Text;
       if (this.touchControls.visible) {
-        text.setText('Tap E');
+        keyText.setText('TAP');
+        label.setText(nearby.label);
       } else {
-        text.setText(`[E] ${nearby.label}`);
+        keyText.setText('E');
+        label.setText(nearby.label);
       }
       const bg = this.interactHint.getAt(0) as Phaser.GameObjects.Rectangle;
-      bg.setSize(text.width + 16, 26);
+      const totalWidth = 22 + label.width + 16;
+      bg.setSize(totalWidth, 24);
     }
   }
 
