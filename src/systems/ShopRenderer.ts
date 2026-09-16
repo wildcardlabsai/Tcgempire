@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SHOP, FURNITURE, FurnitureItem } from '../config/shop-layout';
+import { SHOP, FURNITURE } from '../config/shop-layout';
 import { Inventory } from '../data/Inventory';
 import { Decorations, DECORATION_CATALOG } from '../data/Decorations';
 
@@ -53,7 +53,7 @@ export class ShopRenderer {
   }
 
   private drawInteractionZones(): void {
-    // Invisible interaction markers - no visible furniture needed since shop-bg has it
+    // Invisible interaction markers - shop-bg provides all visuals
   }
 
   private drawProducts(): void {
@@ -66,7 +66,7 @@ export class ShopRenderer {
       const y = shelf.y - shelf.height / 2;
       const tiers = 3;
       const tierH = shelf.height / tiers;
-      const slotsPerTier = Math.floor(shelf.width / 22);
+      const slotsPerTier = Math.floor(shelf.width / 20);
 
       let slotIndex = 0;
       for (const { product, quantity } of shelfProducts) {
@@ -74,34 +74,34 @@ export class ShopRenderer {
 
         const tier = Math.floor(slotIndex / slotsPerTier);
         const col = slotIndex % slotsPerTier;
-        const px = x + 12 + col * 20;
+        const px = x + 10 + col * 18;
         const py = y + tier * tierH + tierH / 2 + 2;
 
         if (this.scene.textures.exists(product.textureKey)) {
           const sprite = this.scene.add.image(px, py, product.textureKey);
-          sprite.setDisplaySize(16, 20);
+          sprite.setDisplaySize(14, 18);
           sprite.setDepth(4);
           this.productSprites.push(sprite);
         } else {
           const g = this.scene.add.graphics();
           g.fillStyle(product.color, 1);
-          g.fillRoundedRect(px - 7, py - 9, 14, 18, 2);
+          g.fillRoundedRect(px - 6, py - 8, 12, 16, 2);
           g.setDepth(4);
           this.productSprites.push(g);
         }
 
         if (quantity > 1) {
           const qtyBg = this.scene.add.graphics();
-          const qtyX = px + 6;
-          const qtyY = py - 10;
+          const qtyX = px + 5;
+          const qtyY = py - 9;
           qtyBg.fillStyle(0x000000, 0.7);
-          qtyBg.fillRoundedRect(qtyX - 6, qtyY - 5, 12, 10, 3);
+          qtyBg.fillRoundedRect(qtyX - 5, qtyY - 4, 10, 9, 2);
           qtyBg.setDepth(5);
           this.productSprites.push(qtyBg);
 
           const qtyLabel = this.scene.add.text(qtyX, qtyY, `${quantity}`, {
             fontFamily: '"Segoe UI", Arial, sans-serif',
-            fontSize: '7px',
+            fontSize: '6px',
             color: '#ffffff',
             fontStyle: 'bold',
           });

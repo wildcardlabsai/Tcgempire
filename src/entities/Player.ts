@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { SHOP } from '../config/shop-layout';
 
 const SPEED = 160;
-const DISPLAY_SIZE = 48;
+const DISPLAY_SIZE = 40;
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 

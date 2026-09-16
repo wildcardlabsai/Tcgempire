@@ -3,9 +3,9 @@ import { SHOP, DOOR, FURNITURE } from '../config/shop-layout';
 import { Inventory } from '../data/Inventory';
 import { Product } from '../data/Products';
 
-const CUSTOMER_SPEED = 60;
-const SIZE = 20;
-const DISPLAY_SIZE = 36;
+const CUSTOMER_SPEED = 55;
+const SIZE = 18;
+const DISPLAY_SIZE = 32;
 
 const SKIN_COLORS = [0xf5c6a0, 0xd4a07a, 0xc68642, 0x8d5524, 0xffdbac];
 const SHIRT_COLORS = [0x5dade2, 0x58d68d, 0xf0b27a, 0xbb8fce, 0xf1948a, 0x85c1e9, 0xabebc6];
@@ -118,7 +118,7 @@ export class Customer {
     const shelves = FURNITURE.filter((f) => f.id.startsWith('shelf'));
     if (shelves.length === 0) return;
     const shelf = shelves[Math.floor(Math.random() * shelves.length)];
-    const offsetX = (Math.random() - 0.5) * 40;
+    const offsetX = (Math.random() - 0.5) * 30;
     const offsetY = shelf.height / 2 + SIZE;
     this.targetX = shelf.x + offsetX;
     this.targetY = shelf.y + offsetY;
@@ -254,18 +254,18 @@ export class Customer {
     const colorHex = this.desiredProduct.color;
     const g = this.scene.add.graphics();
     g.fillStyle(0xffffff, 0.9);
-    g.fillRoundedRect(-22, -20, 44, 24, 6);
-    g.fillTriangle(-4, 4, 4, 4, 0, 10);
+    g.fillRoundedRect(-20, -18, 40, 22, 5);
+    g.fillTriangle(-3, 4, 3, 4, 0, 9);
     g.fillStyle(colorHex, 1);
-    g.fillRoundedRect(-12, -14, 10, 14, 2);
+    g.fillRoundedRect(-10, -12, 9, 12, 2);
     const icon = this.desiredProduct.category === 'booster' ? '!' : '?';
-    const txt = this.scene.add.text(6, -12, icon, {
+    const txt = this.scene.add.text(5, -10, icon, {
       fontFamily: 'Arial',
-      fontSize: '10px',
+      fontSize: '9px',
       color: '#333',
       fontStyle: 'bold',
     });
-    this.speechBubble = this.scene.add.container(this.sprite.x, this.sprite.y - 30, [g, txt]);
+    this.speechBubble = this.scene.add.container(this.sprite.x, this.sprite.y - 26, [g, txt]);
     this.speechBubble.setDepth(15);
   }
 
@@ -278,7 +278,7 @@ export class Customer {
 
   private updateSpeechBubblePosition(): void {
     if (this.speechBubble) {
-      this.speechBubble.setPosition(this.sprite.x, this.sprite.y - 30);
+      this.speechBubble.setPosition(this.sprite.x, this.sprite.y - 26);
     }
   }
 

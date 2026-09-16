@@ -12,17 +12,21 @@ export class StartScene extends Phaser.Scene {
   }
 
   create(): void {
-    const { width, height } = this.scale;
+    const { width: w, height: h } = this.scale;
     this.cameras.main.setBackgroundColor('#1a1a2e');
 
     const hasImage = this.textures.exists('start-screen') &&
       this.textures.get('start-screen').key !== '__MISSING';
 
     if (hasImage) {
-      this.createWithImage(width, height);
+      this.createWithImage(w, h);
     } else {
-      this.createFallback(width, height);
+      this.createFallback(w, h);
     }
+
+    this.scale.on('resize', (gameSize: Phaser.Structs.Size) => {
+      this.scene.restart();
+    });
   }
 
   private createWithImage(w: number, h: number): void {
@@ -38,86 +42,46 @@ export class StartScene extends Phaser.Scene {
     if (hasSave) {
       const saveInfo = SaveManager.getSaveInfo();
 
-      const continueBtn = this.createStyledButton(w / 2, h * 0.545, 200, 50, 'CONTINUE  ▶', () => {
+      const continueBtn = this.createPlayButton(w / 2, h * 0.55, 220, 56, 'CONTINUE  ▶', () => {
         SaveManager.load();
         this.startGame();
       });
 
       if (saveInfo) {
-        const infoText = this.add.text(w / 2, h * 0.545 + 32, `Day ${saveInfo.day} · £${saveInfo.cash.toLocaleString('en-GB')}`, {
+        const infoText = this.add.text(w / 2, h * 0.55 + 36, `Day ${saveInfo.day} · £${saveInfo.cash.toLocaleString('en-GB')}`, {
           fontFamily: '"Segoe UI", Arial, sans-serif',
-          fontSize: '11px',
+          fontSize: '12px',
           color: '#ffffff',
           stroke: '#000000',
           strokeThickness: 3,
         });
-        infoText.setOrigin(0.5);
-        infoText.setDepth(12);
+        infoText.setOrigin(0.5).setDepth(12);
       }
 
-      const newY = h * 0.645;
-      const newBg = this.add.rectangle(w / 2, newY, 140, 32, 0x000000, 0.5);
-      newBg.setStrokeStyle(1, 0xd4a854, 0.6);
-      newBg.setInteractive({ useHandCursor: true });
-      newBg.setDepth(10);
-
-      const newText = this.add.text(w / 2, newY, 'NEW GAME', {
-        fontFamily: '"Segoe UI", Arial, sans-serif',
-        fontSize: '13px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      });
-      newText.setOrigin(0.5);
-      newText.setDepth(11);
-
-      newBg.on('pointerover', () => {
-        newBg.setFillStyle(0x222222, 0.7);
-        this.tweens.add({ targets: [newBg, newText], scaleX: 1.05, scaleY: 1.05, duration: 80 });
-      });
-      newBg.on('pointerout', () => {
-        newBg.setFillStyle(0x000000, 0.5);
-        this.tweens.add({ targets: [newBg, newText], scaleX: 1, scaleY: 1, duration: 80 });
-      });
-      newBg.on('pointerdown', () => {
+      const newBtn = this.createPlayButton(w / 2, h * 0.65, 160, 40, 'NEW GAME', () => {
         SaveManager.deleteSave();
-        GameState.reset();
-        Inventory.reset();
-        Collection.reset();
-        PriceManager.reset();
-        Decorations.reset();
-        this.startGame();
+        this.resetAndStart();
       });
+      newBtn.setAlpha(0.8);
 
-      [continueBtn, newBg, newText].forEach((el) => {
+      [continueBtn, newBtn].forEach((el) => {
         el.setAlpha(0);
         this.tweens.add({ targets: el, alpha: 1, duration: 400, delay: 600, ease: 'Power2' });
       });
     } else {
-      const playHit = this.add.rectangle(w / 2, h * 0.545, 220, 55, 0x000000, 0);
-      playHit.setInteractive({ useHandCursor: true });
-      playHit.setDepth(10);
+      const playBtn = this.createPlayButton(w / 2, h * 0.55, 240, 60, 'PLAY  ▶', () => {
+        this.resetAndStart();
+      });
 
-      playHit.on('pointerover', () => {
-        this.tweens.add({ targets: playHit, scaleX: 1.05, scaleY: 1.05, duration: 80 });
-      });
-      playHit.on('pointerout', () => {
-        this.tweens.add({ targets: playHit, scaleX: 1, scaleY: 1, duration: 80 });
-      });
-      playHit.on('pointerdown', () => {
-        GameState.reset();
-        Inventory.reset();
-        Collection.reset();
-        PriceManager.reset();
-        Decorations.reset();
-        this.startGame();
-      });
+      playBtn.setAlpha(0);
+      this.tweens.add({ targets: playBtn, alpha: 1, duration: 400, delay: 400, ease: 'Power2' });
     }
 
     this.drawLoadingBar(w, h);
     this.createSparkles(w, h);
   }
 
-  private createStyledButton(x: number, y: number, bw: number, bh: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
+  private createPlayButton(x: number, y: number, bw: number, bh: number, label: string, onClick: () => void): Phaser.GameObjects.Container {
     const btnBg = this.add.graphics();
     btnBg.fillStyle(0xf0b030);
     btnBg.fillRoundedRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
@@ -128,15 +92,17 @@ export class StartScene extends Phaser.Scene {
 
     const btnText = this.add.text(0, 0, label, {
       fontFamily: '"Segoe UI", Arial, sans-serif',
-      fontSize: '20px',
+      fontSize: `${Math.max(16, Math.min(22, bh * 0.4))}px`,
       color: '#ffffff',
       fontStyle: 'bold',
       stroke: '#8b6914',
       strokeThickness: 2,
     }).setOrigin(0.5);
 
-    const container = this.add.container(x, y, [btnBg, btnText]);
-    container.setSize(bw, bh);
+    const hitArea = this.add.rectangle(0, 0, bw + 20, bh + 20, 0x000000, 0);
+
+    const container = this.add.container(x, y, [hitArea, btnBg, btnText]);
+    container.setSize(bw + 20, bh + 20);
     container.setInteractive({ useHandCursor: true });
     container.setDepth(11);
 
@@ -146,7 +112,16 @@ export class StartScene extends Phaser.Scene {
     container.on('pointerout', () => {
       this.tweens.add({ targets: container, scaleX: 1, scaleY: 1, duration: 80 });
     });
-    container.on('pointerdown', onClick);
+    container.on('pointerdown', () => {
+      this.tweens.add({
+        targets: container,
+        scaleX: 0.95,
+        scaleY: 0.95,
+        duration: 60,
+        yoyo: true,
+        onComplete: onClick,
+      });
+    });
 
     return container;
   }
@@ -205,7 +180,7 @@ export class StartScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(6).setAlpha(0.8);
 
     const taglines = ['Build your shop.', 'Build your collection.', 'Build your empire.'];
-    const tagY = h * 0.46;
+    const tagY = h * 0.40;
     taglines.forEach((line, i) => {
       const t = this.add.text(w / 2, tagY + i * 22, line, {
         fontFamily: '"Segoe UI", Arial, sans-serif',
@@ -224,54 +199,25 @@ export class StartScene extends Phaser.Scene {
     const hasSave = SaveManager.hasSave();
     if (hasSave) {
       const saveInfo = SaveManager.getSaveInfo();
-      this.createStyledButton(w / 2, h * 0.62, 200, 50, 'CONTINUE  ▶', () => {
+      this.createPlayButton(w / 2, h * 0.55, 220, 56, 'CONTINUE  ▶', () => {
         SaveManager.load();
         this.startGame();
       });
       if (saveInfo) {
-        this.add.text(w / 2, h * 0.62 + 32, `Day ${saveInfo.day} · £${saveInfo.cash.toLocaleString('en-GB')}`, {
+        this.add.text(w / 2, h * 0.55 + 36, `Day ${saveInfo.day} · £${saveInfo.cash.toLocaleString('en-GB')}`, {
           fontFamily: '"Segoe UI", Arial, sans-serif',
           fontSize: '11px',
           color: '#aaa',
         }).setOrigin(0.5).setDepth(12);
       }
 
-      const newY = h * 0.73;
-      const newBg = this.add.rectangle(w / 2, newY, 140, 34, 0x2c2c4a, 0.8);
-      newBg.setStrokeStyle(1, 0x555588);
-      newBg.setInteractive({ useHandCursor: true });
-      newBg.setDepth(10);
-      const newText = this.add.text(w / 2, newY, 'NEW GAME', {
-        fontFamily: '"Segoe UI", Arial, sans-serif',
-        fontSize: '14px',
-        color: '#cccccc',
-      }).setOrigin(0.5).setDepth(11);
-
-      newBg.on('pointerover', () => {
-        newBg.setFillStyle(0x3a3a5c);
-        this.tweens.add({ targets: [newBg, newText], scaleX: 1.05, scaleY: 1.05, duration: 80 });
-      });
-      newBg.on('pointerout', () => {
-        newBg.setFillStyle(0x2c2c4a);
-        this.tweens.add({ targets: [newBg, newText], scaleX: 1, scaleY: 1, duration: 80 });
-      });
-      newBg.on('pointerdown', () => {
+      this.createPlayButton(w / 2, h * 0.66, 160, 40, 'NEW GAME', () => {
         SaveManager.deleteSave();
-        GameState.reset();
-        Inventory.reset();
-        Collection.reset();
-        PriceManager.reset();
-        Decorations.reset();
-        this.startGame();
+        this.resetAndStart();
       });
     } else {
-      this.createStyledButton(w / 2, h * 0.62, 220, 50, 'PLAY  ▶', () => {
-        GameState.reset();
-        Inventory.reset();
-        Collection.reset();
-        PriceManager.reset();
-        Decorations.reset();
-        this.startGame();
+      this.createPlayButton(w / 2, h * 0.55, 240, 60, 'PLAY  ▶', () => {
+        this.resetAndStart();
       });
     }
 
@@ -280,8 +226,8 @@ export class StartScene extends Phaser.Scene {
   }
 
   private drawLoadingBar(w: number, h: number): void {
-    const barY = h * 0.91;
-    const barW = 160;
+    const barY = h * 0.88;
+    const barW = Math.min(180, w * 0.5);
     const barH = 6;
 
     const loadText = this.add.text(w / 2, barY + 12, 'LOADING...', {
@@ -332,6 +278,15 @@ export class StartScene extends Phaser.Scene {
         ease: 'Sine.easeInOut',
       });
     }
+  }
+
+  private resetAndStart(): void {
+    GameState.reset();
+    Inventory.reset();
+    Collection.reset();
+    PriceManager.reset();
+    Decorations.reset();
+    this.startGame();
   }
 
   private startGame(): void {

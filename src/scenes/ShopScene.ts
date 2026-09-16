@@ -21,6 +21,15 @@ import { GameState } from '../data/GameState';
 
 const SPEED = 160;
 
+const INTERACT_LABELS: Record<string, string> = {
+  counter: 'SERVE',
+  'shelf-left': 'STOCK',
+  'shelf-right': 'STOCK',
+  'shelf-center': 'STOCK',
+  computer: 'SHOP',
+  storage: 'OPEN',
+};
+
 export class ShopScene extends Phaser.Scene {
   private player!: Player;
   private hud!: HUD;
@@ -135,10 +144,13 @@ export class ShopScene extends Phaser.Scene {
 
     if (GameState.day === 1 && !SaveManager.hasSave()) {
       this.time.delayedCall(800, () => {
-        this.hud.showToast('Walk with WASD, interact with E', '#ffd700');
+        const msg = this.touchControls.visible
+          ? 'Use joystick to move, tap buttons to interact'
+          : 'Walk with WASD, interact with E';
+        this.hud.showToast(msg, '#ffd700');
       });
       this.time.delayedCall(2800, () => {
-        this.hud.showToast('Stock shelves, then click End Day!', '#ffd700');
+        this.hud.showToast('Stock shelves, then tap End Day!', '#ffd700');
       });
     }
   }
@@ -201,6 +213,14 @@ export class ShopScene extends Phaser.Scene {
       });
     });
 
+    this.interaction.onInteract('shelf-center', () => {
+      if (this.overlay.isVisible()) return;
+      this.shelfPanel.show(() => {}, () => {
+        this.shopRenderer.refreshProducts();
+        this.hud.showToast('Shelves stocked!', '#f39c12');
+      });
+    });
+
     this.interaction.onInteract('computer', () => {
       if (this.overlay.isVisible()) return;
       this.computerPanel.show(() => {});
@@ -253,21 +273,28 @@ export class ShopScene extends Phaser.Scene {
 
   private updateInteractHint(): void {
     const nearby = this.interaction.getNearbyInteractable(this.player.x, this.player.y);
-    this.interactHint.setVisible(nearby !== null);
-    if (nearby) {
-      this.interactHint.setPosition(this.player.x, this.player.y - 34);
-      const label = this.interactHint.getAt(3) as Phaser.GameObjects.Text;
-      const keyText = this.interactHint.getAt(2) as Phaser.GameObjects.Text;
-      if (this.touchControls.visible) {
-        keyText.setText('TAP');
-        label.setText(nearby.label);
+
+    if (this.touchControls.visible) {
+      this.interactHint.setVisible(false);
+      if (nearby) {
+        const label = INTERACT_LABELS[nearby.id] || nearby.label;
+        this.touchControls.showInteractButton(label);
       } else {
+        this.touchControls.hideInteractButton();
+      }
+    } else {
+      this.interactHint.setVisible(nearby !== null);
+      this.touchControls.hideInteractButton();
+      if (nearby) {
+        this.interactHint.setPosition(this.player.x, this.player.y - 34);
+        const label = this.interactHint.getAt(3) as Phaser.GameObjects.Text;
+        const keyText = this.interactHint.getAt(2) as Phaser.GameObjects.Text;
         keyText.setText('E');
         label.setText(nearby.label);
+        const bg = this.interactHint.getAt(0) as Phaser.GameObjects.Rectangle;
+        const totalWidth = 22 + label.width + 16;
+        bg.setSize(totalWidth, 24);
       }
-      const bg = this.interactHint.getAt(0) as Phaser.GameObjects.Rectangle;
-      const totalWidth = 22 + label.width + 16;
-      bg.setSize(totalWidth, 24);
     }
   }
 

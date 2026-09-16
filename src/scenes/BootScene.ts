@@ -7,8 +7,8 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.image('start-screen', 'images/start-screen.png');
-    this.load.image('shop-bg', 'images/shop-bg.png');
+    this.load.image('start-screen', 'images/start-screen-portrait.png');
+    this.load.image('shop-bg', 'images/shop-bg-portrait.png');
 
     this.load.spritesheet('player-sheet', 'images/player-sheet.png', {
       frameWidth: 352,
