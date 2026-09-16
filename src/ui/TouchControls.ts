@@ -24,7 +24,6 @@ export class TouchControls {
     if (!this.scene.sys.game.device.input.touch) return;
 
     this.visible = true;
-    const cam = this.scene.cameras.main;
 
     this.joystickBase = this.scene.add.circle(0, 0, 50, 0x000000, 0.25);
     this.joystickBase.setStrokeStyle(2, 0xffffff, 0.3);
@@ -57,7 +56,8 @@ export class TouchControls {
     });
 
     this.scene.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.x < cam.width * 0.6 && this.pointerId === null) {
+      const vw = this.scene.scale.width;
+      if (pointer.x < vw * 0.6 && this.pointerId === null) {
         this.active = true;
         this.pointerId = pointer.id;
         this.startX = pointer.x;
@@ -110,8 +110,9 @@ export class TouchControls {
 
   updateLayout(): void {
     if (!this.visible) return;
-    const cam = this.scene.cameras.main;
-    this.interactButton.setPosition(cam.width - 60, cam.height - 60);
+    const vw = this.scene.scale.width;
+    const vh = this.scene.scale.height;
+    this.interactButton.setPosition(vw - 60, vh - 60);
   }
 
   consumeInteract(): boolean {

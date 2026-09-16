@@ -126,8 +126,10 @@ export class ShopScene extends Phaser.Scene {
 
     this.cameras.main.setBounds(0, 0, SHOP.width, SHOP.height);
     this.cameras.main.startFollow(this.player.sprite, true, 0.1, 0.1);
+    this.updateCameraZoom();
 
     this.scale.on('resize', () => {
+      this.updateCameraZoom();
       this.touchControls.updateLayout();
     });
 
@@ -267,6 +269,17 @@ export class ShopScene extends Phaser.Scene {
       const totalWidth = 22 + label.width + 16;
       bg.setSize(totalWidth, 24);
     }
+  }
+
+  private updateCameraZoom(): void {
+    const cam = this.cameras.main;
+    const vw = this.scale.width;
+    const vh = this.scale.height;
+    const zoomX = vw / SHOP.width;
+    const zoomY = vh / SHOP.height;
+    const zoom = Math.max(zoomX, zoomY);
+    cam.setZoom(zoom);
+    cam.setBounds(0, 0, SHOP.width, SHOP.height);
   }
 
   private checkLowStock(): void {

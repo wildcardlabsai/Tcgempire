@@ -37,7 +37,7 @@ export class HUD {
   }
 
   showToast(message: string, color: string = '#2ecc71'): void {
-    const cam = this.scene.cameras.main;
+    const vw = this.scene.scale.width;
     const y = 52 + this.toasts.length * 36;
 
     const text = this.scene.add.text(0, 0, message, {
@@ -52,7 +52,7 @@ export class HUD {
     const bg = this.scene.add.rectangle(0, 0, text.width + 24, 30, 0x0a0a1a, 0.85);
     bg.setStrokeStyle(1, Phaser.Display.Color.HexStringToColor(color).color, 0.5);
 
-    const toast = this.scene.add.container(cam.width / 2, y, [bg, text]);
+    const toast = this.scene.add.container(vw / 2, y, [bg, text]);
     toast.setDepth(250);
     toast.setScrollFactor(0);
     toast.setAlpha(0);
@@ -69,18 +69,13 @@ export class HUD {
   }
 
   private create(): void {
-    const cam = this.scene.cameras.main;
+    const vw = this.scene.scale.width;
     const barH = 38;
 
-    const barBg = this.scene.textures.exists('hud-bar')
-      ? this.scene.add.image(cam.width / 2, barH / 2, 'hud-bar')
-      : this.scene.add.rectangle(cam.width / 2, barH / 2, cam.width, barH, 0x1a1a2e, 0.88);
+    const barBg = this.scene.add.rectangle(vw / 2, barH / 2, vw, barH, 0x1a1a2e, 0.88);
+    barBg.setStrokeStyle(1, 0xd4a854, 0.4);
 
-    if (barBg instanceof Phaser.GameObjects.Rectangle) {
-      barBg.setStrokeStyle(1, 0xd4a854, 0.4);
-    }
-
-    const accentLine = this.scene.add.rectangle(cam.width / 2, barH, cam.width, 2, 0xd4a854, 0.5);
+    const accentLine = this.scene.add.rectangle(vw / 2, barH, vw, 2, 0xd4a854, 0.5);
 
     const iconFont: Phaser.Types.GameObjects.Text.TextStyle = {
       fontFamily: '"Georgia", serif',
@@ -218,8 +213,15 @@ export class HUD {
   }
 
   private updateButtonPosition(): void {
-    const cam = this.scene.cameras.main;
-    this.endDayButton.setPosition(cam.width - 56, 19);
+    const vw = this.scene.scale.width;
+    this.endDayButton.setPosition(vw - 56, 19);
+
+    const barBg = this.container.getAt(0) as Phaser.GameObjects.Rectangle;
+    const accentLine = this.container.getAt(1) as Phaser.GameObjects.Rectangle;
+    barBg.setPosition(vw / 2, 19);
+    barBg.setSize(vw, 38);
+    accentLine.setPosition(vw / 2, 38);
+    accentLine.setSize(vw, 2);
   }
 
   update(delta: number): void {

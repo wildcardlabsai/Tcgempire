@@ -9,10 +9,10 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   backgroundColor: '#1a1a2e',
   pixelArt: false,
   scale: {
-    mode: Phaser.Scale.ScaleModes.FIT,
+    mode: Phaser.Scale.ScaleModes.RESIZE,
     autoCenter: Phaser.Scale.Center.CENTER_BOTH,
-    width: 800,
-    height: 600,
+    width: window.innerWidth,
+    height: window.innerHeight,
   },
   scene: [BootScene, StartScene, ShopScene],
 };
