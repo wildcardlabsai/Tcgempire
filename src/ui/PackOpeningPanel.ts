@@ -1,7 +1,7 @@
 import { UIOverlay } from './UIOverlay';
 import { Inventory } from '../data/Inventory';
 import { Collection } from '../data/Collection';
-import { Card, BOOSTER_TO_SET, openBoosterPack, RARITY_COLORS, RARITY_LABELS } from '../data/Cards';
+import { Card, BOOSTER_TO_SET, openBoosterPack, RARITY_COLORS, RARITY_LABELS, ELEMENT_COLORS } from '../data/Cards';
 import { PRODUCTS } from '../data/Products';
 
 export class PackOpeningPanel {
@@ -85,7 +85,7 @@ export class PackOpeningPanel {
     let cardHtml = '';
     for (const card of cards) {
       const rarityColor = '#' + RARITY_COLORS[card.rarity].toString(16).padStart(6, '0');
-      const cardColor = '#' + card.color.toString(16).padStart(6, '0');
+      const cardColor = '#' + ELEMENT_COLORS[card.element].primary.toString(16).padStart(6, '0');
       const owned = Collection.getCount(card.id);
 
       cardHtml += `

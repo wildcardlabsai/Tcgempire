@@ -24,7 +24,8 @@ interface CustomerAppearance {
 
 export type CustomerState = 'entering' | 'browsing' | 'walking-to-shelf' | 'looking' | 'walking-to-counter' | 'waiting' | 'served' | 'leaving';
 
-const AISLE_Y = 480;
+const LOWER_AISLE_Y = 440;
+const UPPER_AISLE_Y = 190;
 
 export class Customer {
   sprite: Phaser.GameObjects.Container;
@@ -179,9 +180,28 @@ export class Customer {
     const cy = this.sprite.y;
     const points: { x: number; y: number }[] = [];
 
-    if (Math.abs(cy - ty) > 60 && this.wouldCrossObstacle(cx, cy, tx, ty)) {
-      points.push({ x: cx, y: AISLE_Y });
-      points.push({ x: tx, y: AISLE_Y });
+    if (!this.wouldCrossObstacle(cx, cy, tx, ty)) {
+      points.push({ x: tx, y: ty });
+      return points;
+    }
+
+    const goingUp = ty < cy;
+    if (goingUp) {
+      if (cy > LOWER_AISLE_Y) {
+        points.push({ x: cx, y: LOWER_AISLE_Y });
+      }
+      const sideX = tx < 240 ? 30 : 450;
+      points.push({ x: sideX, y: LOWER_AISLE_Y });
+      points.push({ x: sideX, y: UPPER_AISLE_Y });
+      points.push({ x: tx, y: UPPER_AISLE_Y });
+    } else {
+      if (cy < UPPER_AISLE_Y) {
+        points.push({ x: cx, y: UPPER_AISLE_Y });
+      }
+      const sideX = tx < 240 ? 30 : 450;
+      points.push({ x: sideX, y: UPPER_AISLE_Y });
+      points.push({ x: sideX, y: LOWER_AISLE_Y });
+      points.push({ x: tx, y: LOWER_AISLE_Y });
     }
     points.push({ x: tx, y: ty });
     return points;
@@ -345,7 +365,7 @@ export class Customer {
       this.purchaseQty = 1;
       const counter = FURNITURE.find((f) => f.id === 'counter')!;
       const cx = counter.x + (Math.random() - 0.5) * 40;
-      const cy = counter.y + counter.height / 2 + 20;
+      const cy = counter.y + counter.height / 2 + 25;
       this.waypoints = this.buildWaypoints(cx, cy);
       this.waypointIdx = 0;
       this.stuckTimer = 0;

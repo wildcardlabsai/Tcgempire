@@ -326,9 +326,14 @@ export class ShopScene extends Phaser.Scene {
     const vh = this.scale.height;
     const zoomX = vw / SHOP.width;
     const zoomY = vh / SHOP.height;
-    const zoom = Math.max(zoomX, zoomY);
+    const zoom = Math.min(zoomX, zoomY);
     cam.setZoom(zoom);
-    cam.setBounds(0, 0, SHOP.width, SHOP.height);
+
+    const worldViewW = vw / zoom;
+    const worldViewH = vh / zoom;
+    const boundsX = worldViewW > SHOP.width ? -(worldViewW - SHOP.width) / 2 : 0;
+    const boundsY = worldViewH > SHOP.height ? -(worldViewH - SHOP.height) / 2 : 0;
+    cam.setBounds(boundsX, boundsY, SHOP.width - boundsX * 2, SHOP.height - boundsY * 2);
   }
 
   private checkLowStock(): void {

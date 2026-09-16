@@ -22,9 +22,9 @@ export const FURNITURE: FurnitureItem[] = [
   {
     id: 'counter',
     x: 240,
-    y: 120,
+    y: 115,
     width: 180,
-    height: 30,
+    height: 50,
     color: 0x5c3a1e,
     label: 'Checkout',
     interactionMessage: 'Checkout — Serve customers here.',
