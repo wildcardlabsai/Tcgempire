@@ -4,7 +4,7 @@ import { StartScene } from '../scenes/StartScene';
 import { ShopScene } from '../scenes/ShopScene';
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
+  type: Phaser.CANVAS,
   parent: 'game-container',
   backgroundColor: '#1a1a2e',
   pixelArt: false,
