@@ -93,3 +93,19 @@ export const PLAYER_START = {
   x: 240,
   y: 600,
 };
+
+const COLLISION_PADDING = 4;
+
+export function collidesWithFurniture(x: number, y: number, halfW: number, halfH: number): boolean {
+  for (const f of FURNITURE) {
+    const fl = f.x - f.width / 2 - COLLISION_PADDING;
+    const fr = f.x + f.width / 2 + COLLISION_PADDING;
+    const ft = f.y - f.height / 2 - COLLISION_PADDING;
+    const fb = f.y + f.height / 2 + COLLISION_PADDING;
+
+    if (x + halfW > fl && x - halfW < fr && y + halfH > ft && y - halfH < fb) {
+      return true;
+    }
+  }
+  return false;
+}

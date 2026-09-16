@@ -1,8 +1,9 @@
 import Phaser from 'phaser';
-import { SHOP } from '../config/shop-layout';
+import { SHOP, collidesWithFurniture } from '../config/shop-layout';
 
 const SPEED = 160;
 const DISPLAY_SIZE = 56;
+const COLLISION_HALF = 10;
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 
@@ -17,6 +18,10 @@ export class Player {
   private isMoving = false;
   private playerImage: Phaser.GameObjects.Image | null = null;
   private hasSprites = false;
+
+  private tapTargetX: number | null = null;
+  private tapTargetY: number | null = null;
+  private tapMarker: Phaser.GameObjects.Arc | null = null;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
@@ -57,28 +62,82 @@ export class Player {
   setVelocity(vx: number, vy: number): void {
     this.vx = vx;
     this.vy = vy;
+    if (vx !== 0 || vy !== 0) {
+      this.clearTapTarget();
+    }
+  }
+
+  setTapTarget(worldX: number, worldY: number): void {
+    this.tapTargetX = worldX;
+    this.tapTargetY = worldY;
+
+    if (this.tapMarker) {
+      this.tapMarker.destroy();
+    }
+    this.tapMarker = this.scene.add.circle(worldX, worldY, 6, 0xffd700, 0.5);
+    this.tapMarker.setDepth(8);
+    this.scene.tweens.add({
+      targets: this.tapMarker,
+      alpha: 0,
+      scale: 2,
+      duration: 600,
+      onComplete: () => {
+        if (this.tapMarker) {
+          this.tapMarker.destroy();
+          this.tapMarker = null;
+        }
+      },
+    });
+  }
+
+  private clearTapTarget(): void {
+    this.tapTargetX = null;
+    this.tapTargetY = null;
   }
 
   update(delta: number): void {
     const dt = delta / 1000;
-    let nx = this.sprite.x + this.vx * dt;
-    let ny = this.sprite.y + this.vy * dt;
 
-    const half = DISPLAY_SIZE * 0.25;
+    let moveVx = this.vx;
+    let moveVy = this.vy;
+
+    if (this.tapTargetX !== null && this.tapTargetY !== null && moveVx === 0 && moveVy === 0) {
+      const dx = this.tapTargetX - this.sprite.x;
+      const dy = this.tapTargetY - this.sprite.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 6) {
+        this.clearTapTarget();
+      } else {
+        moveVx = (dx / dist) * SPEED;
+        moveVy = (dy / dist) * SPEED;
+      }
+    }
+
+    let nx = this.sprite.x + moveVx * dt;
+    let ny = this.sprite.y + moveVy * dt;
+
     const wallT = SHOP.wallThickness;
-    nx = Phaser.Math.Clamp(nx, wallT + half, SHOP.width - wallT - half);
-    ny = Phaser.Math.Clamp(ny, wallT + half, SHOP.height - wallT - half);
+    nx = Phaser.Math.Clamp(nx, wallT + COLLISION_HALF, SHOP.width - wallT - COLLISION_HALF);
+    ny = Phaser.Math.Clamp(ny, wallT + COLLISION_HALF, SHOP.height - wallT - COLLISION_HALF);
 
-    this.sprite.x = nx;
-    this.sprite.y = ny;
+    if (!collidesWithFurniture(nx, ny, COLLISION_HALF, COLLISION_HALF)) {
+      this.sprite.x = nx;
+      this.sprite.y = ny;
+    } else if (!collidesWithFurniture(nx, this.sprite.y, COLLISION_HALF, COLLISION_HALF)) {
+      this.sprite.x = nx;
+    } else if (!collidesWithFurniture(this.sprite.x, ny, COLLISION_HALF, COLLISION_HALF)) {
+      this.sprite.y = ny;
+    } else {
+      this.clearTapTarget();
+    }
 
-    this.isMoving = Math.abs(this.vx) > 1 || Math.abs(this.vy) > 1;
+    this.isMoving = Math.abs(moveVx) > 1 || Math.abs(moveVy) > 1;
 
     if (this.isMoving) {
-      if (Math.abs(this.vy) > Math.abs(this.vx)) {
-        this.direction = this.vy < 0 ? 'up' : 'down';
+      if (Math.abs(moveVy) > Math.abs(moveVx)) {
+        this.direction = moveVy < 0 ? 'up' : 'down';
       } else {
-        this.direction = this.vx < 0 ? 'left' : 'right';
+        this.direction = moveVx < 0 ? 'left' : 'right';
       }
     }
 

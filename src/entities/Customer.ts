@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
-import { SHOP, DOOR, FURNITURE } from '../config/shop-layout';
+import { SHOP, DOOR, FURNITURE, collidesWithFurniture } from '../config/shop-layout';
 import { Inventory } from '../data/Inventory';
 import { Product } from '../data/Products';
 
 const CUSTOMER_SPEED = 55;
 const SIZE = 18;
 const DISPLAY_SIZE = 46;
+const COLLISION_HALF = 8;
 
 const SKIN_COLORS = [0xf5c6a0, 0xd4a07a, 0xc68642, 0x8d5524, 0xffdbac];
 const SHIRT_COLORS = [0x5dade2, 0x58d68d, 0xf0b27a, 0xbb8fce, 0xf1948a, 0x85c1e9, 0xabebc6];
@@ -37,28 +38,18 @@ export class Customer {
   private patienceRemaining: number;
   private patienceBar: Phaser.GameObjects.Graphics;
   private speechBubble: Phaser.GameObjects.Container | null = null;
-  private customerImage: Phaser.GameObjects.Image | null = null;
 
   constructor(scene: Phaser.Scene, patience: number = 15) {
     this.scene = scene;
     this.maxPatience = patience;
     this.patienceRemaining = patience;
 
-    const charIdx = Math.floor(Math.random() * 12);
-    const spriteKey = `customer-${charIdx}-front`;
-
     this.patienceBar = scene.add.graphics();
 
-    if (scene.textures.exists(spriteKey)) {
-      this.customerImage = scene.add.image(0, 0, spriteKey);
-      this.customerImage.setDisplaySize(DISPLAY_SIZE, DISPLAY_SIZE * 1.1);
-      this.sprite = scene.add.container(DOOR.x, SHOP.height - SHOP.wallThickness - SIZE, [this.customerImage, this.patienceBar]);
-    } else {
-      const appearance = this.randomAppearance();
-      const g = scene.add.graphics();
-      this.drawCharacter(g, appearance);
-      this.sprite = scene.add.container(DOOR.x, SHOP.height - SHOP.wallThickness - SIZE, [g, this.patienceBar]);
-    }
+    const appearance = this.randomAppearance();
+    const g = scene.add.graphics();
+    this.drawCharacter(g, appearance);
+    this.sprite = scene.add.container(DOOR.x, SHOP.height - SHOP.wallThickness - SIZE, [g, this.patienceBar]);
 
     this.sprite.setSize(SIZE, SIZE);
     this.sprite.setDepth(9);
@@ -231,8 +222,21 @@ export class Customer {
 
     const speed = CUSTOMER_SPEED * dt;
     const step = Math.min(speed, dist);
-    this.sprite.x += (dx / dist) * step;
-    this.sprite.y += (dy / dist) * step;
+    const nx = this.sprite.x + (dx / dist) * step;
+    const ny = this.sprite.y + (dy / dist) * step;
+
+    const wallT = SHOP.wallThickness;
+    const clampedX = Phaser.Math.Clamp(nx, wallT + COLLISION_HALF, SHOP.width - wallT - COLLISION_HALF);
+    const clampedY = Phaser.Math.Clamp(ny, wallT + COLLISION_HALF, SHOP.height - wallT - COLLISION_HALF);
+
+    if (!collidesWithFurniture(clampedX, clampedY, COLLISION_HALF, COLLISION_HALF)) {
+      this.sprite.x = clampedX;
+      this.sprite.y = clampedY;
+    } else if (!collidesWithFurniture(clampedX, this.sprite.y, COLLISION_HALF, COLLISION_HALF)) {
+      this.sprite.x = clampedX;
+    } else if (!collidesWithFurniture(this.sprite.x, clampedY, COLLISION_HALF, COLLISION_HALF)) {
+      this.sprite.y = clampedY;
+    }
   }
 
   private isNear(tx: number, ty: number, threshold: number): boolean {

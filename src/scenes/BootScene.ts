@@ -15,7 +15,6 @@ export class BootScene extends Phaser.Scene {
       frameHeight: 279,
     });
 
-    this.load.image('customers-sheet', 'images/customers-sheet.png');
     this.load.image('products-sheet', 'images/products-sheet.png');
 
     this.load.image('product-dragon-booster', 'images/products/booster-flame.png');
@@ -28,7 +27,6 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     this.extractPlayerFrames();
-    this.extractCustomerSprites();
     generateAllTextures(this);
     this.scene.start('StartScene');
   }
@@ -49,35 +47,17 @@ export class BootScene extends Phaser.Scene {
         if (!ct) continue;
         const c = ct.getContext();
         c.drawImage(source, col * fw, row * fh, fw, fh, 0, 0, fw, fh);
+        const imgData = c.getImageData(0, 0, fw, fh);
+        const px = imgData.data;
+        for (let i = 0; i < px.length; i += 4) {
+          if (px[i] < 30 && px[i + 1] < 30 && px[i + 2] < 30) {
+            px[i + 3] = 0;
+          }
+        }
+        c.putImageData(imgData, 0, 0);
         ct.refresh();
       }
     }
   }
 
-  private extractCustomerSprites(): void {
-    if (!this.textures.exists('customers-sheet')) return;
-
-    const sheet = this.textures.get('customers-sheet');
-    const source = sheet.getSourceImage() as HTMLImageElement;
-
-    const charW = 384;
-    const charH = 341;
-    const frameW = 96;
-    const frameH = 85;
-
-    for (let charRow = 0; charRow < 3; charRow++) {
-      for (let charCol = 0; charCol < 4; charCol++) {
-        const charIdx = charRow * 4 + charCol;
-        const baseX = charCol * charW;
-        const baseY = charRow * charH;
-
-        const key = `customer-${charIdx}-front`;
-        const ct = this.textures.createCanvas(key, frameW, frameH);
-        if (!ct) continue;
-        const c = ct.getContext();
-        c.drawImage(source, baseX, baseY, frameW, frameH, 0, 0, frameW, frameH);
-        ct.refresh();
-      }
-    }
-  }
 }

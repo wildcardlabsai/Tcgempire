@@ -137,6 +137,20 @@ export class ShopScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player.sprite, true, 0.1, 0.1);
     this.updateCameraZoom();
 
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (this.overlay.isVisible()) return;
+      if (this.touchControls.visible) {
+        const jDx = pointer.x - 90;
+        const jDy = pointer.y - (this.scale.height - 110);
+        if (Math.sqrt(jDx * jDx + jDy * jDy) < 90) return;
+        const iBx = pointer.x - (this.scale.width - 70);
+        const iBy = pointer.y - (this.scale.height - 110);
+        if (Math.sqrt(iBx * iBx + iBy * iBy) < 50) return;
+      }
+      const worldPoint = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+      this.player.setTapTarget(worldPoint.x, worldPoint.y);
+    });
+
     this.scale.on('resize', () => {
       this.updateCameraZoom();
       this.touchControls.updateLayout();
